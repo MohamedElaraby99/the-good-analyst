@@ -129,6 +129,17 @@ export default function Navbar() {
 
           {/* Right Side */}
           <div className="flex items-center space-x-4">
+            {/* Mobile Login Button - Show only on mobile when not logged in */}
+            {!user?.fullName && (
+              <Link
+                to="/login"
+                className="sm:hidden inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-[#4D6D8E] to-[#3A5A7A] hover:from-[#3A5A7A] hover:to-[#2A4A6A] text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              >
+                <FaUser className="w-3 h-3" />
+                <span>دخول</span>
+              </Link>
+            )}
+            
             {/* Burger Menu Button - Always visible */}
             <button
               onClick={toggleMenu}
