@@ -243,26 +243,6 @@ export default function Profile() {
                 />
               </div>
 
-              {/* Username */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  <FaUser className="text-[#4D6D8E]" />
-                  اسم المستخدم
-                </label>
-                <input
-                  type="text"
-                  value={isEditing ? userInput.username : (userData?.username || "")}
-                  onChange={(e) => setUserInput({ ...userInput, username: e.target.value })}
-                  disabled={!isEditing}
-                  className={`w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#4D6D8E] focus:border-transparent ${
-                    !isEditing 
-                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 cursor-not-allowed' 
-                      : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                  }`}
-                  placeholder="أدخل اسم المستخدم"
-                />
-              </div>
-
               {/* Email */}
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -271,7 +251,7 @@ export default function Profile() {
                 </label>
                 <input
                   type="email"
-              value={userData?.email || ""}
+                  value={userData?.email || ""}
                   disabled
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 cursor-not-allowed"
                 />
@@ -296,94 +276,6 @@ export default function Profile() {
                   placeholder="أدخل رقم هاتفك"
                 />
               </div>
-
-              {/* User-specific fields - only show for regular users */}
-              {userData?.role !== 'ADMIN' && userData?.role !== 'SUPER_ADMIN' && (
-                <>
-                  {/* Father's Phone Number */}
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      <FaPhone className="text-[#4D6D8E]" />
-                      رقم هاتف الأب
-                    </label>
-                    <input
-                      type="tel"
-                      value={isEditing ? userInput.fatherPhoneNumber : (userData?.fatherPhoneNumber || "")}
-                      onChange={(e) => setUserInput({ ...userInput, fatherPhoneNumber: e.target.value })}
-                      disabled={!isEditing}
-                      className={`w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#4D6D8E] focus:border-transparent ${
-                        !isEditing 
-                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 cursor-not-allowed' 
-                          : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                      }`}
-                      placeholder="أدخل رقم هاتف الأب"
-                    />
-                  </div>
-
-                  {/* Age */}
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      <FaCalendarAlt className="text-[#4D6D8E]" />
-                      العمر
-                    </label>
-                    <input
-                      type="number"
-                      value={isEditing ? userInput.age : (userData?.age || "")}
-                      onChange={(e) => setUserInput({ ...userInput, age: e.target.value })}
-                      disabled={!isEditing}
-                      className={`w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#4D6D8E] focus:border-transparent ${
-                        !isEditing 
-                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 cursor-not-allowed' 
-                          : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                      }`}
-                      placeholder="أدخل عمرك"
-                      min="5"
-                      max="100"
-                    />
-                  </div>
-
-                  {/* Stage */}
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      <FaBook className="text-[#4D6D8E]" />
-                      المرحلة الدراسية
-                    </label>
-                    
-                    <div className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                      {userData?.stage?.name || userData?.stage || "غير محدد"}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      المرحلة الدراسية لا يمكن تعديلها
-                    </div>
-                  </div>
-
-                  {/* Governorate */}
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      <FaMapMarkerAlt className="text-red-500" />
-                      المدينة
-                    </label>
-                    <select
-                      value={isEditing ? userInput.governorate : (userData?.governorate || "")}
-                      onChange={(e) => setUserInput({ ...userInput, governorate: e.target.value })}
-                      disabled={!isEditing}
-                      className={`w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#4D6D8E] focus:border-transparent ${
-                        !isEditing 
-                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 cursor-not-allowed' 
-                          : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                      }`}
-                    >
-                      <option value="">اختر المدينة</option>
-                      {egyptianCities.map((gov) => (
-                        <option key={gov.value} value={gov.value}>
-                          {gov.label}
-                        </option>
-                      ))}
-                      <option value="Other">أخرى</option>
-                    </select>
-                  </div>
-                </>
-              )}
             </div>
           </div>
 
