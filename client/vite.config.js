@@ -10,5 +10,11 @@ export default defineConfig({
         ? 'https://api.thegoodanalyst.net/api/v1'
         : (process.env.VITE_REACT_APP_API_URL || 'http://localhost:4020/api/v1')
     )
+  },
+  server: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+      'Cross-Origin-Embedder-Policy': 'unsafe-none'
+    }
   }
 })

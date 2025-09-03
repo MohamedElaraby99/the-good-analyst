@@ -31,6 +31,19 @@ export const createAccount = createAsyncThunk("/auth/signup", async (data) => {
     }
 })
 
+// .....Google OAuth signup.........  
+export const createAccountWithGoogle = createAsyncThunk("/auth/signup/google", async (data) => {
+    const loadingMessage = toast.loading("Please wait! signing up with Google...");
+    try {
+        const res = await axiosInstance.post("/user/register/google", data);
+        toast.success(res?.data?.message, { id: loadingMessage });
+        return res?.data
+    } catch (error) {
+        toast.error(error?.response?.data?.message, { id: loadingMessage });
+        throw error;
+    }
+})
+
 // .....Login.........
 export const login = createAsyncThunk("/auth/login", async (data) => {
     const loadingMessage = toast.loading("Please wait! logging into your account...");
@@ -179,6 +192,16 @@ const authSlice = createSlice({
     extraReducers: (builder) => {
         // for signup
         builder.addCase(createAccount.fulfilled, (state, action) => {
+            localStorage.setItem("data", JSON.stringify(action?.payload?.user));
+            localStorage.setItem("role", action?.payload?.user?.role);
+            localStorage.setItem("isLoggedIn", true);
+            state.data = action?.payload?.user;
+            state.role = action?.payload?.user?.role;
+            state.isLoggedIn = true;
+        })
+
+        // for Google OAuth signup  
+        builder.addCase(createAccountWithGoogle.fulfilled, (state, action) => {
             localStorage.setItem("data", JSON.stringify(action?.payload?.user));
             localStorage.setItem("role", action?.payload?.user?.role);
             localStorage.setItem("isLoggedIn", true);

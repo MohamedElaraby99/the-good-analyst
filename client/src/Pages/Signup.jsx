@@ -4,13 +4,14 @@ import { BsPersonCircle } from "react-icons/bs";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import Layout from "../Layout/Layout";
-import { createAccount } from "../Redux/Slices/AuthSlice";
+import { createAccount, createAccountWithGoogle } from "../Redux/Slices/AuthSlice";
 import InputBox from "../Components/InputBox/InputBox";
 import CaptchaComponent from "../Components/CaptchaComponent";
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaUserPlus, FaGraduationCap, FaCamera, FaUpload, FaPhone, FaMapMarkerAlt, FaBook, FaExclamationTriangle, FaTimes, FaCheckCircle, FaInfoCircle } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 import { axiosInstance } from "../Helpers/axiosInstance";
 import { useEffect } from "react";
-import { egyptianCities } from "../utils/governorateMapping";
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { generateDeviceFingerprint, getDeviceType, getBrowserInfo, getOperatingSystem } from "../utils/deviceFingerprint";
 import logo from "../assets/logo.png";
 
@@ -21,42 +22,97 @@ export default function Signup() {
   const [previewImage, setPreviewImage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [stages, setStages] = useState([]);
   const [captchaSessionId, setCaptchaSessionId] = useState("");
   const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
+  const [googleAuthInProgress, setGoogleAuthInProgress] = useState(false);
   const [signupData, setSignupData] = useState({
     fullName: "",
-    username: "",
     email: "",
     password: "",
     phoneNumber: "",
-    fatherPhoneNumber: "",
-    governorate: "",
-    stage: "",
-    age: "",
     avatar: "",
-    adminCode: "",
   });
 
-  // Check if this is an admin registration
-  const isAdminRegistration = signupData.adminCode === 'ADMIN123';
+  // Google OAuth Client ID - You'll need to get this from Google Cloud Console
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id-here";
 
-  // Fetch stages on component mount
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch stages
-        const stagesResponse = await axiosInstance.get('/stages');
-        if (stagesResponse.data.success) {
-          setStages(stagesResponse.data.data.stages);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
+  // Google Login Success Handler
+  const handleGoogleSuccess = async (credentialResponse) => {
+    // Prevent multiple concurrent Google auth attempts
+    if (googleAuthInProgress) {
+      console.log('Google auth already in progress, ignoring duplicate request');
+      return;
+    }
+    
+    try {
+      console.log('Google OAuth Success:', credentialResponse);
+      setGoogleAuthInProgress(true);
+      setIsLoading(true);
+      
+      if (!credentialResponse.credential) {
+        throw new Error('No credential received from Google');
       }
-    };
+      
+      // Generate device information for fingerprinting
+      const deviceInfo = {
+        platform: getDeviceType(),
+        screenResolution: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        additionalInfo: {
+          browser: getBrowserInfo().browser,
+          browserVersion: getBrowserInfo().version,
+          os: getOperatingSystem(),
+          language: navigator.language,
+          colorDepth: screen.colorDepth,
+          touchSupport: 'ontouchstart' in window,
+        }
+      };
 
-    fetchData();
-  }, []);
+      const requestData = {
+        googleToken: credentialResponse.credential,
+        deviceInfo: deviceInfo
+        // Note: No CAPTCHA required for Google OAuth
+      };
+
+      console.log('Sending Google OAuth data to backend:', {
+        ...requestData,
+        googleToken: 'TOKEN_HIDDEN_FOR_SECURITY'
+      });
+      
+      // Call backend to handle Google authentication
+      const response = await dispatch(createAccountWithGoogle(requestData));
+      if (response?.payload?.success) {
+        const user = response.payload.user;
+        const message = user.isGoogleAuth ? 
+          `Welcome ${user.fullName}! Your account has been created with Google.` :
+          `Welcome back ${user.fullName}! You've been logged in.`;
+        toast.success(message);
+        navigate("/");
+      } else {
+        throw new Error(response?.payload?.message || 'Registration failed');
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      let errorMessage = 'Google authentication failed. Please try again.';
+      
+      if (error.message.includes('rate limit') || error.message.includes('429')) {
+        errorMessage = 'Google services are temporarily busy. Please try again in a moment.';
+      } else if (error.message.includes('network')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+      setGoogleAuthInProgress(false);
+    }
+  };
+
+  // Google Login Error Handler
+  const handleGoogleError = (error) => {
+    console.error('Google Login Failed:', error);
+    toast.error('Google authentication failed. Please try again.');
+  };
 
   function handleUserInput(e) {
     const { name, value } = e.target;
@@ -132,71 +188,34 @@ export default function Signup() {
     }
     
     
-    // Basic required fields for all users
-    if (!signupData.password || !signupData.fullName || !signupData.username || !signupData.avatar) {
-      toast.error("الاسم، اسم المستخدم، كلمة المرور، والصورة الشخصية مطلوبة");
+    // Basic required fields validation
+    if (!signupData.password || !signupData.fullName || !signupData.email || !signupData.phoneNumber) {
+      toast.error("يرجى ملء جميع الحقول المطلوبة");
       return;
     }
     
-    // Role-specific validation
-    if (isAdminRegistration) {
-      // For admin users: email is required
-      if (!signupData.email) {
-        toast.error("البريد الإلكتروني مطلوب للمشرفين");
-        return;
-      }
-      // Validate email format for admin
-      if (!signupData.email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g)) {
-        toast.error("بريد إلكتروني غير صحيح");
-        return;
-      }
-    } else {
-      // For regular users: phone number is required, email is optional
-      if (!signupData.phoneNumber || !signupData.governorate || !signupData.stage || !signupData.age) {
-        toast.error("يرجى ملء جميع الحقول المطلوبة");
-        return;
-      }
-      // Validate phone number for regular users
-      if (!signupData.phoneNumber.match(/^(\+20|0)?1[0125][0-9]{8}$/)) {
-        toast.error("يرجى إدخال رقم هاتف مصري صحيح");
-        return;
-      }
-      // Validate email if provided (optional for regular users)
-      if (signupData.email && !signupData.email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g)) {
-        toast.error("بريد إلكتروني غير صحيح");
-        return;
-      }
+    // Validate email format
+    if (!signupData.email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g)) {
+      toast.error("بريد إلكتروني غير صحيح");
+      return;
+    }
+    
+    // Validate phone number
+    if (!signupData.phoneNumber.match(/^(\+20|0)?1[0125][0-9]{8}$/)) {
+      toast.error("يرجى إدخال رقم هاتف مصري صحيح");
+      return;
     }
 
     // checking name field length
     if (signupData.fullName.length < 3) {
-      toast.error("يجب أن يكون الاسم 3 أحرف أقل");
-      return;
-    }
-    // checking username field length
-    if (signupData.username.length < 3) {
-      toast.error("يجب أن يكون اسم المستخدم 3 أحرف أقل");
-      return;
-    }
-    // checking username format
-    if (!signupData.username.match(/^[a-zA-Z0-9_]+$/)) {
-      toast.error("يمكن أن يحتوي اسم المستخدم على أحرف وأرقام وشرطة سفلية فقط");
+      toast.error("يجب أن يكون الاسم 3 أحرف على الأقل");
       return;
     }
     
-    // For regular users, validate additional fields
-    if (!isAdminRegistration) {
-      // father phone optional - validate only if provided
-      if (signupData.fatherPhoneNumber && !signupData.fatherPhoneNumber.match(/^(\+20|0)?1[0125][0-9]{8}$/)) {
-        toast.error("يرجى إدخال رقم هاتف ولي الامر الصحيح");
-        return;
-      }
-      // checking valid age
-      const age = parseInt(signupData.age);
-      if (isNaN(age) || age < 5 || age > 100) {
-        toast.error("يرجى إدخال عمر صحيح بين 5 و 100");
-        return;
-      }
+    // checking password length
+    if (signupData.password.length < 6) {
+      toast.error("يجب أن تكون كلمة المرور 6 أحرف على الأقل");
+      return;
     }
 
     // Generate device information for fingerprinting
@@ -217,30 +236,12 @@ export default function Signup() {
     // Create request data with device info as JSON object
     const requestData = {
       fullName: signupData.fullName,
-      username: signupData.username,
+      email: signupData.email,
       password: signupData.password,
-      adminCode: signupData.adminCode,
+      phoneNumber: signupData.phoneNumber,
       captchaSessionId: captchaSessionId,
       deviceInfo: deviceInfo
     };
-    
-    // Add role-specific fields
-    if (isAdminRegistration) {
-      // For admin users: email is required
-      requestData.email = signupData.email;
-    } else {
-      // For regular users: phone number is required, email is optional
-      requestData.phoneNumber = signupData.phoneNumber;
-      if (signupData.email) {
-        requestData.email = signupData.email; // Include email if provided
-      }
-      if (signupData.fatherPhoneNumber) {
-        requestData.fatherPhoneNumber = signupData.fatherPhoneNumber;
-      }
-      requestData.governorate = signupData.governorate;
-      requestData.stage = signupData.stage;
-      requestData.age = signupData.age;
-    }
 
     // Handle avatar file separately if present
     if (signupData.avatar) {
@@ -278,16 +279,10 @@ export default function Signup() {
       if (response?.payload?.success) {
         setSignupData({
           fullName: "",
-          username: "",
           email: "",
           password: "",
           phoneNumber: "",
-          fatherPhoneNumber: "",
-          governorate: "",
-          stage: "",
-          age: "",
           avatar: "",
-          adminCode: "",
         });
 
         setPreviewImage("");
@@ -307,16 +302,10 @@ export default function Signup() {
       if (response?.payload?.success) {
         setSignupData({
           fullName: "",
-          username: "",
           email: "",
           password: "",
           phoneNumber: "",
-          fatherPhoneNumber: "",
-          governorate: "",
-          stage: "",
-          age: "",
           avatar: "",
-          adminCode: "",
         });
 
         setPreviewImage("");
@@ -329,7 +318,12 @@ export default function Signup() {
   }
 
   return (
-    <Layout>
+    <GoogleOAuthProvider 
+      clientId={GOOGLE_CLIENT_ID}
+      onScriptLoadError={() => console.error('Google OAuth script failed to load')}
+      onScriptLoadSuccess={() => console.log('Google OAuth script loaded successfully')}
+    >
+      <Layout>
       <div className="min-h-screen bg-gradient-to-br from-[#3A5A7A]-50 via-white to-[#3A5A7A]-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" dir="rtl">
         <div className="max-w-md w-full space-y-8">
           {/* Enhanced Header with Logo */}
@@ -388,35 +382,10 @@ export default function Signup() {
                 </div>
               </div>
 
-              {/* Username Field */}
-              <div className="group">
-                <label htmlFor="username" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-right">
-                  اسم المستخدم
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <FaUser className="h-5 w-5 text-[#4D6D8E] group-focus-within:text-[#3A5A7A]-600 transition-colors duration-200" />
-                  </div>
-                  <input
-                    id="username"
-                    name="username"
-                    type="text"
-                    required
-                    className="block w-full pr-12 pl-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-[#4D6D8E]/20 focus:border-[#4D6D8E] transition-all duration-300 text-right shadow-sm hover:shadow-md"
-                    placeholder="أدخل اسم المستخدم"
-                    value={signupData.username}
-                    onChange={handleUserInput}
-                  />
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-right">
-                  يمكن استخدام الأحرف والأرقام والشرطة السفلية فقط
-                </p>
-              </div>
-
               {/* Email Field */}
               <div className="group">
                 <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-right">
-                  البريد الإلكتروني {!isAdminRegistration && "(اختياري)"}
+                  البريد الإلكتروني
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
@@ -426,18 +395,13 @@ export default function Signup() {
                     id="email"
                     name="email"
                     type="email"
-                    required={isAdminRegistration}
+                    required
                     className="block w-full pr-12 pl-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-[#4D6D8E]/20 focus:border-[#4D6D8E] transition-all duration-300 text-right shadow-sm hover:shadow-md"
-                    placeholder={isAdminRegistration ? "أدخل بريدك الإلكتروني" : "أدخل بريدك الإلكتروني (اختياري)"}
+                    placeholder="أدخل بريدك الإلكتروني"
                     value={signupData.email}
                     onChange={handleUserInput}
                   />
                 </div>
-                {!isAdminRegistration && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-right">
-                    يمكنك ترك هذا الحقل فارغاً إذا كنت لا تريد استخدام البريد الإلكتروني
-                  </p>
-                )}
               </div>
 
               {/* Password Field */}
@@ -473,145 +437,35 @@ export default function Signup() {
                 </div>
               </div>
 
-              {/* Phone Number Field - Only for regular users */}
-              {!isAdminRegistration && (
-                <div className="group">
-                  <label htmlFor="phoneNumber" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-right">
-                    رقم الهاتف *
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                      <FaPhone className="h-5 w-5 text-[#4D6D8E] group-focus-within:text-[#3A5A7A]-600 transition-colors duration-200" />
-                    </div>
-                    <input
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      type="tel"
-                      required
-                      className="block w-full pr-12 pl-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-[#4D6D8E]/20 focus:border-[#4D6D8E] transition-all duration-300 text-right shadow-sm hover:shadow-md"
-                      placeholder="أدخل رقم هاتفك المصري"
-                      value={signupData.phoneNumber}
-                      onChange={handleUserInput}
-                    />
+              {/* Phone Number Field */}
+              <div className="group">
+                <label htmlFor="phoneNumber" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-right">
+                  رقم الهاتف
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                    <FaPhone className="h-5 w-5 text-[#4D6D8E] group-focus-within:text-[#3A5A7A]-600 transition-colors duration-200" />
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-right">
-                    سيتم استخدام هذا الرقم لتسجيل الدخول إلى حسابك
-                  </p>
+                  <input
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    type="tel"
+                    required
+                    className="block w-full pr-12 pl-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-[#4D6D8E]/20 focus:border-[#4D6D8E] transition-all duration-300 text-right shadow-sm hover:shadow-md"
+                    placeholder="أدخل رقم هاتفك"
+                    value={signupData.phoneNumber}
+                    onChange={handleUserInput}
+                  />
                 </div>
-              )}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-right">
+                  سيتم استخدام هذا الرقم لتسجيل الدخول إلى حسابك
+                </p>
+              </div>
 
-              {/* Father's Phone Number Field - Only for regular users */}
-              {!isAdminRegistration && (
-                <div className="group">
-                  <label htmlFor="fatherPhoneNumber" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-right">
-                    رقم هاتف ولي الامر
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                      <FaPhone className="h-5 w-5 text-[#4D6D8E] group-focus-within:text-[#3A5A7A]-600 transition-colors duration-200" />
-                    </div>
-                    <input
-                      id="fatherPhoneNumber"
-                      name="fatherPhoneNumber"
-                      type="tel"
-                      required={false}
-                      className="block w-full pr-12 pl-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-[#4D6D8E]/20 focus:border-[#4D6D8E] transition-all duration-300 text-right shadow-sm hover:shadow-md"
-                      placeholder="أدخل رقم هاتف ولي الامر"
-                      value={signupData.fatherPhoneNumber}
-                      onChange={handleUserInput}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Governorate Field - Only for regular users */}
-              {!isAdminRegistration && (
-                <div className="group">
-                  <label htmlFor="governorate" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-right">
-                    المدينة
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                      <FaMapMarkerAlt className="h-5 w-5 text-[#4D6D8E] group-focus-within:text-[#3A5A7A]-600 transition-colors duration-200" />
-                    </div>
-                    <select
-                      id="governorate"
-                      name="governorate"
-                      required
-                      className="block w-full pr-12 pl-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-[#4D6D8E]/20 focus:border-[#4D6D8E] transition-all duration-300 text-right shadow-sm hover:shadow-md"
-                      value={signupData.governorate}
-                      onChange={handleUserInput}
-                    >
-                      <option value="">اختر المدينة</option>
-                      {egyptianCities.map((gov) => (
-                        <option key={gov.value} value={gov.value}>
-                          {gov.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {/* Stage Field - Only for regular users */}
-              {!isAdminRegistration && (
-                <div className="group">
-                  <label htmlFor="stage" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-right">
-                    المرحلة الدراسية
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                      <FaBook className="h-5 w-5 text-[#4D6D8E] group-focus-within:text-[#3A5A7A]-600 transition-colors duration-200" />
-                    </div>
-                    <select
-                      id="stage"
-                      name="stage"
-                      required
-                      className="block w-full pr-12 pl-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-[#4D6D8E]/20 focus:border-[#4D6D8E] transition-all duration-300 text-right shadow-sm hover:shadow-md"
-                      value={signupData.stage}
-                      onChange={handleUserInput}
-                    >
-                      <option value="">اختر المرحلة الدراسية</option>
-                      {stages.map((stage) => (
-                        <option key={stage._id} value={stage._id}>
-                          {stage.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {/* Age Field - Only for regular users */}
-              {!isAdminRegistration && (
-                <div className="group">
-                  <label htmlFor="age" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-right">
-                    العمر
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                      <FaUser className="h-5 w-5 text-[#4D6D8E] group-focus-within:text-[#3A5A7A]-600 transition-colors duration-200" />
-                    </div>
-                    <input
-                      id="age"
-                      name="age"
-                      type="number"
-                      min="5"
-                      max="100"
-                      required
-                      className="block w-full pr-12 pl-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-[#4D6D8E]/20 focus:border-[#4D6D8E] transition-all duration-300 text-right shadow-sm hover:shadow-md"
-                      placeholder="أدخل عمرك"
-                      value={signupData.age}
-                      onChange={handleUserInput}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Enhanced Avatar Upload */}
+              {/* Enhanced Avatar Upload - Optional */}
               <div className="group">
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-right">
-                  الصورة الشخصية
+                  الصورة الشخصية (اختياري)
                 </label>
                 <div className="flex items-center space-x-reverse space-x-4">
                   <div className="relative">
@@ -646,7 +500,6 @@ export default function Signup() {
                       onChange={getImage}
                       type="file"
                       accept=".jpg, .jpeg, .png, image/*"
-                      required
                       className="hidden"
                     />
                   </div>
@@ -686,6 +539,36 @@ export default function Signup() {
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#4D6D8E] via-[#4D6D8E] to-[#4D6D8E] opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
               </button>
             </form>
+
+            {/* Google Sign Up Button */}
+            <div className="mt-6">
+              <div className="text-center mb-4">
+                <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">أو سجل باستخدام</span>
+              </div>
+              <div className="flex justify-center relative">
+                <div className={`${googleAuthInProgress ? 'opacity-50 pointer-events-none' : ''} transition-opacity duration-200`}>
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    size="large"
+                    text="signup_with"
+                    locale="ar"
+                    theme="outline"
+                    shape="rectangular"
+                    useOneTap={false}
+                    promptMomentNotification={(notification) => {
+                      console.log('Google prompt notification:', notification);
+                    }}
+                    flow="auth-code"
+                  />
+                </div>
+                {googleAuthInProgress && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#4D6D8E]"></div>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Enhanced Divider */}
             <div className="mt-8">
@@ -735,5 +618,6 @@ export default function Signup() {
         </div>
       </div>
     </Layout>
+    </GoogleOAuthProvider>
   );
 }

@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import fs from 'fs';
 import cloudinary from 'cloudinary';
+import { OAuth2Client } from 'google-auth-library';
 import AppError from "../utils/error.utils.js";
 import sendEmail from "../utils/sendEmail.js";
 import UserDevice from '../models/userDevice.model.js';
@@ -17,6 +18,100 @@ const cookieOptions = {
     secure: true, 
     sameSite: 'none'
 }
+
+// Google OAuth2 Client
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Google OAuth Registration Helper
+const registerWithGoogle = async (req, res, next, googleToken, deviceInfo) => {
+    try {
+        // Verify Google token
+        const ticket = await googleClient.verifyIdToken({
+            idToken: googleToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        
+        const payload = ticket.getPayload();
+        const { email, name, picture, sub: googleId } = payload;
+        
+        if (!email || !name) {
+            return next(new AppError("Invalid Google token", 400));
+        }
+        
+        // Check if user already exists
+        let existingUser = await userModel.findOne({ email });
+        if (existingUser) {
+            // User exists, log them in
+            const token = await existingUser.generateJWTToken();
+            existingUser.password = undefined;
+            
+            res.cookie('token', token, cookieOptions);
+            return res.status(200).json({
+                success: true,
+                message: 'User logged in successfully with Google',
+                user: existingUser,
+            });
+        }
+        
+        // Create new user with Google data
+        const generatedUsername = email.split('@')[0] + Math.random().toString(36).substr(2, 5);
+        
+        // Handle profile picture with fallback for rate limiting
+        let avatarUrl = "";
+        let avatarPublicId = `google_${googleId}`;
+        
+        if (picture) {
+            try {
+                // Test if the Google image URL is accessible
+                const imageResponse = await fetch(picture, { method: 'HEAD' });
+                if (imageResponse.ok) {
+                    avatarUrl = picture;
+                } else {
+                    console.log('Google profile image not accessible, using placeholder');
+                    avatarUrl = "";
+                }
+            } catch (error) {
+                console.log('Error accessing Google profile image:', error.message);
+                avatarUrl = "";
+            }
+        }
+        
+        const userData = {
+            fullName: name,
+            username: generatedUsername,
+            email,
+            password: googleId, // Use Google ID as password
+            role: 'USER',
+            avatar: {
+                public_id: avatarPublicId,
+                secure_url: avatarUrl,
+            },
+            googleId,
+            isGoogleAuth: true
+        };
+        
+        const user = await userModel.create(userData);
+        
+        if (!user) {
+            return next(new AppError("Google registration failed, please try again", 400));
+        }
+        
+        const token = await user.generateJWTToken();
+        user.password = undefined;
+        
+        res.cookie('token', token, cookieOptions);
+        
+        res.status(201).json({
+            success: true,
+            message: 'User registered successfully with Google',
+            user,
+        });
+        
+    } catch (error) {
+        console.error('Google OAuth error:', error);
+        return next(new AppError("Google authentication failed", 400));
+    }
+};
 
 
 // Register  
@@ -33,88 +128,60 @@ const register = async (req, res, next) => {
             }
         }
 
-        const { fullName, username, email, password, phoneNumber, fatherPhoneNumber, governorate, stage, age, adminCode, deviceInfo } = requestBody;
+        const { fullName, username, email, password, phoneNumber, fatherPhoneNumber, governorate, stage, age, adminCode, deviceInfo, googleToken } = requestBody;
 
+        // Handle Google OAuth registration
+        if (googleToken) {
+            return await registerWithGoogle(req, res, next, googleToken, deviceInfo);
+        }
+
+        // Regular registration logic
         // Determine user role based on admin code
         let userRole = 'USER';
         if (adminCode === 'ADMIN123') {
             userRole = 'ADMIN';
         }
 
-        // Check required fields based on role
-        if (!fullName || !username || !password) {
-            return next(new AppError("Name, username, and password are required", 400));
+        // Check required fields for regular registration
+        if (!fullName || !email || !password || !phoneNumber) {
+            return next(new AppError("Name, email, password, and phone number are required", 400));
         }
 
-        // Role-specific field validation
-        if (userRole === 'USER') {
-            // For USER role: phone number is required, email is optional
-            if (!phoneNumber) {
-                return next(new AppError("Phone number is required for regular users", 400));
+        // Check if the user already exists by email or phone number
+        const userExist = await userModel.findOne({ 
+            $or: [{ email }, { phoneNumber }] 
+        });
+        if (userExist) {
+            if (userExist.email === email) {
+                return next(new AppError("Email already exists, please login", 400));
             }
-            if (!governorate || !stage || !age) {
-                return next(new AppError("Governorate, stage, and age are required for regular users", 400));
-            }
-        } else if (userRole === 'ADMIN') {
-            // For ADMIN role: email is required
-            if (!email) {
-                return next(new AppError("Email is required for admin users", 400));
+            if (userExist.phoneNumber === phoneNumber) {
+                return next(new AppError("Phone number already exists, please login", 400));
             }
         }
 
-        // Check if the user already exists based on role
-        let userExist;
-        if (userRole === 'USER') {
-            // For USER role: check phone number and username
-            userExist = await userModel.findOne({ 
-                $or: [{ phoneNumber }, { username }] 
-            });
-            if (userExist) {
-                if (userExist.phoneNumber === phoneNumber) {
-                    return next(new AppError("Phone number already exists, please login", 400));
-                }
-                if (userExist.username === username) {
-                    return next(new AppError("Username already exists, please choose another", 400));
-                }
-            }
-        } else {
-            // For ADMIN role: check email and username
-            userExist = await userModel.findOne({ 
-                $or: [{ email }, { username }] 
-            });
-            if (userExist) {
-                if (userExist.email === email) {
-                    return next(new AppError("Email already exists, please login", 400));
-                }
-                if (userExist.username === username) {
-                    return next(new AppError("Username already exists, please choose another", 400));
-                }
-            }
+        // Generate a unique username from email if not provided
+        const generatedUsername = username || email.split('@')[0] + Math.random().toString(36).substr(2, 5);
+        
+        // Check if username already exists
+        const usernameExist = await userModel.findOne({ username: generatedUsername });
+        if (usernameExist) {
+            return next(new AppError("Username already exists, please choose another", 400));
         }
 
-        // Prepare user data based on role
+        // Prepare user data
         const userData = {
             fullName,
-            username,
+            username: generatedUsername,
+            email,
             password,
-            role: userRole,
+            phoneNumber,
+            role: 'USER',
             avatar: {
-                public_id: userRole === 'USER' ? phoneNumber : email,
+                public_id: phoneNumber,
                 secure_url: "",
             },
         };
-
-        // Add role-specific fields
-        if (userRole === 'USER') {
-            userData.phoneNumber = phoneNumber;
-            if (email) userData.email = email; // Optional email for USER
-            if (fatherPhoneNumber) userData.fatherPhoneNumber = fatherPhoneNumber;
-            userData.governorate = governorate;
-            userData.stage = stage;
-            userData.age = parseInt(age);
-        } else if (userRole === 'ADMIN') {
-            userData.email = email;
-        }
 
         // Save user in the database and log the user in
         const user = await userModel.create(userData);

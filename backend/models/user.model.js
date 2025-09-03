@@ -25,7 +25,7 @@ const userSchema = new Schema({
     email: {
         type: String,
         required: function() {
-            return ['ADMIN', 'SUPER_ADMIN'].includes(this.role);
+            return ['ADMIN', 'SUPER_ADMIN'].includes(this.role) && !this.isGoogleAuth;
         },
         lowercase: true,
         trim: true,
@@ -36,20 +36,32 @@ const userSchema = new Schema({
     },
     password: {
         type: String,
-        required: [true, 'Password is required'],
+        required: function() {
+            return !this.isGoogleAuth; // Password not required for Google auth
+        },
         minLength: [6, 'Password must be at least 6 characters'],
         select: false
     },
     phoneNumber: {
         type: String,
         required: function() {
-            return this.role === 'USER';
+            return this.role === 'USER' && !this.isGoogleAuth;
         },
         unique: function() {
-            return this.role === 'USER';
+            return this.phoneNumber && this.role === 'USER';
         },
         sparse: true,
         trim: true
+    },
+    // Google OAuth fields
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    isGoogleAuth: {
+        type: Boolean,
+        default: false
     },
     fatherPhoneNumber: {
         type: String,
@@ -59,7 +71,7 @@ const userSchema = new Schema({
     governorate: {
         type: String,
         required: function() {
-            return !['ADMIN', 'SUPER_ADMIN'].includes(this.role);
+            return !['ADMIN', 'SUPER_ADMIN'].includes(this.role) && !this.isGoogleAuth;
         },
         trim: true
     },
@@ -68,13 +80,13 @@ const userSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Stage',
         required: function() {
-            return !['ADMIN', 'SUPER_ADMIN'].includes(this.role);
+            return !['ADMIN', 'SUPER_ADMIN'].includes(this.role) && !this.isGoogleAuth;
         }
     },
     age: {
         type: Number,
         required: function() {
-            return !['ADMIN', 'SUPER_ADMIN'].includes(this.role);
+            return !['ADMIN', 'SUPER_ADMIN'].includes(this.role) && !this.isGoogleAuth;
         },
         min: [5, 'Age must be at least 5'],
         max: [100, 'Age cannot exceed 100']
