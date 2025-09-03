@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { BsPersonCircle } from "react-icons/bs";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import Layout from "../Layout/Layout";
-import { login } from "../Redux/Slices/AuthSlice";
-import InputBox from "../Components/InputBox/InputBox";
-import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaPhone, FaUserTie, FaSignInAlt } from "react-icons/fa";
+import { login, createAccountWithGoogle } from "../Redux/Slices/AuthSlice";
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaPhone, FaSignInAlt } from "react-icons/fa";
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { generateDeviceFingerprint, getDeviceType, getBrowserInfo, getOperatingSystem } from "../utils/deviceFingerprint";
 import logo from "../assets/logo.png";
 
@@ -17,11 +16,15 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginType, setLoginType] = useState('phone'); // 'phone' or 'email'
+  const [googleAuthInProgress, setGoogleAuthInProgress] = useState(false);
   const [loginData, setLoginData] = useState({
     phoneNumber: "",
     email: "",
     password: "",
   });
+
+  // Google OAuth Client ID
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id-here";
 
   function handleUserInput(e) {
     const { name, value } = e.target;
@@ -99,8 +102,87 @@ export default function Login() {
     setIsLoading(false);
   }
 
+  // Google Login Success Handler
+  const handleGoogleSuccess = async (credentialResponse) => {
+    // Prevent multiple concurrent Google auth attempts
+    if (googleAuthInProgress) {
+      console.log('Google auth already in progress, ignoring duplicate request');
+      return;
+    }
+    
+    try {
+      console.log('Google OAuth Success:', credentialResponse);
+      setGoogleAuthInProgress(true);
+      setIsLoading(true);
+      
+      if (!credentialResponse.credential) {
+        throw new Error('No credential received from Google');
+      }
+      
+      // Generate device information for fingerprinting
+      const deviceInfo = {
+        platform: getDeviceType(),
+        screenResolution: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        additionalInfo: {
+          browser: getBrowserInfo().browser,
+          browserVersion: getBrowserInfo().version,
+          os: getOperatingSystem(),
+          language: navigator.language,
+          colorDepth: screen.colorDepth,
+          touchSupport: 'ontouchstart' in window,
+        }
+      };
+
+      const requestData = {
+        googleToken: credentialResponse.credential,
+        deviceInfo: deviceInfo
+      };
+
+      console.log('Sending Google OAuth data to backend for login/signup');
+      
+      // Call backend to handle Google authentication (login or signup)
+      const response = await dispatch(createAccountWithGoogle(requestData));
+      if (response?.payload?.success) {
+        const user = response.payload.user;
+        const message = user.isGoogleAuth ? 
+          `Welcome back ${user.fullName}!` :
+          `Welcome ${user.fullName}! You've been logged in.`;
+        toast.success(message);
+        navigate("/");
+      } else {
+        throw new Error(response?.payload?.message || 'Authentication failed');
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      let errorMessage = 'Google authentication failed. Please try again.';
+      
+      if (error.message.includes('rate limit') || error.message.includes('429')) {
+        errorMessage = 'Google services are temporarily busy. Please try again in a moment.';
+      } else if (error.message.includes('network')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+      setGoogleAuthInProgress(false);
+    }
+  };
+
+  // Google Login Error Handler
+  const handleGoogleError = (error) => {
+    console.error('Google Login Failed:', error);
+    toast.error('Google authentication failed. Please try again.');
+  };
+
   return (
-    <Layout>
+    <GoogleOAuthProvider 
+      clientId={GOOGLE_CLIENT_ID}
+      onScriptLoadError={() => console.error('Google OAuth script failed to load')}
+      onScriptLoadSuccess={() => console.log('Google OAuth script loaded successfully')}
+    >
+      <Layout>
       <div className="min-h-screen bg-gradient-to-br from-[#3A5A7A]-50 via-white to-[#3A5A7A]-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" dir="rtl">
         <div className="max-w-md w-full space-y-8">
           {/* Enhanced Header with Logo */}
@@ -249,6 +331,36 @@ export default function Login() {
               </button>
             </form>
 
+            {/* Google Sign In Button */}
+            <div className="mt-6">
+              <div className="text-center mb-4">
+                <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">أو سجل دخولك باستخدام</span>
+              </div>
+              <div className="flex justify-center relative">
+                <div className={`${googleAuthInProgress || isLoading ? 'opacity-50 pointer-events-none' : ''} transition-opacity duration-200`}>
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    size="large"
+                    text="signin_with"
+                    locale="ar"
+                    theme="outline"
+                    shape="rectangular"
+                    useOneTap={false}
+                    promptMomentNotification={(notification) => {
+                      console.log('Google prompt notification:', notification);
+                    }}
+                    flow="auth-code"
+                  />
+                </div>
+                {googleAuthInProgress && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#4D6D8E]"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Enhanced Divider */}
             <div className="mt-8">
               <div className="relative">
@@ -297,5 +409,6 @@ export default function Login() {
         </div>
       </div>
     </Layout>
+    </GoogleOAuthProvider>
   );
 }

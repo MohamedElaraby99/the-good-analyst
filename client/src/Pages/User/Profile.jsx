@@ -1,15 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getUserData, updateUserData } from "../../Redux/Slices/AuthSlice";
-import InputBox from "../../Components/InputBox/InputBox";
-import { FaPhone, FaMapMarkerAlt, FaGraduationCap, FaCalendarAlt, FaEnvelope, FaUser, FaIdCard, FaEdit, FaSave, FaTimes, FaBook } from "react-icons/fa";
+import { FaPhone, FaEnvelope, FaUser, FaEdit, FaSave, FaTimes } from "react-icons/fa";
 import { IoIosLock, IoIosRefresh } from "react-icons/io";
 import { FiMoreVertical } from "react-icons/fi";
 import Layout from "../../Layout/Layout";
 import { useNavigate } from "react-router-dom";
-
-import { egyptianCities, getArabicCity } from "../../utils/governorateMapping";
-
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -19,17 +15,11 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [userInput, setUserInput] = useState({
     name: userData?.fullName || "",
-    username: userData?.username || "",
     phoneNumber: userData?.phoneNumber || "",
-    fatherPhoneNumber: userData?.fatherPhoneNumber || "",
-    governorate: userData?.governorate || "",
-    age: userData?.age || "",
     userId: null,
   });
   const [isChanged, setIschanged] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-
 
   async function onFormSubmit(e) {
     setIsUpdating(true);
@@ -37,15 +27,7 @@ export default function Profile() {
 
     const formData = new FormData();
     formData.append("fullName", userInput.name);
-    formData.append("username", userInput.username);
     formData.append("phoneNumber", userInput.phoneNumber);
-    
-    // Only append user-specific fields for regular users
-    if (userData?.role !== 'ADMIN' && userData?.role !== 'SUPER_ADMIN') {
-      formData.append("fatherPhoneNumber", userInput.fatherPhoneNumber);
-      formData.append("governorate", userInput.governorate);
-      formData.append("age", userInput.age);
-    }
     
     const data = { formData, id: userInput.userId };
     const response = await dispatch(updateUserData(data));
@@ -57,26 +39,17 @@ export default function Profile() {
     setIsUpdating(false);
   }
 
-
-
   function handleEditClick() {
     setIsEditing(true);
     // Reset form to current user data
     setUserInput({
       name: userData?.fullName || "",
-      username: userData?.username || "",
       phoneNumber: userData?.phoneNumber || "",
-      fatherPhoneNumber: userData?.fatherPhoneNumber || "",
-      governorate: userData?.governorate || "",
-      age: userData?.age || "",
       userId: userData?._id,
     });
     console.log('Edit mode - userInput set to:', {
       name: userData?.fullName || "",
       phoneNumber: userData?.phoneNumber || "",
-      fatherPhoneNumber: userData?.fatherPhoneNumber || "",
-      governorate: userData?.governorate || "",
-      age: userData?.age || "",
     });
   }
 
@@ -86,11 +59,7 @@ export default function Profile() {
     // Reset to original values
     setUserInput({
       name: userData?.fullName || "",
-      username: userData?.username || "",
       phoneNumber: userData?.phoneNumber || "",
-      fatherPhoneNumber: userData?.fatherPhoneNumber || "",
-      governorate: userData?.governorate || "",
-      age: userData?.age || "",
       userId: userData?._id,
     });
   }
@@ -99,26 +68,11 @@ export default function Profile() {
     if (isEditing) {
       let hasChanges = 
         userInput.name !== userData?.fullName || 
-        userInput.username !== userData?.username ||
         userInput.phoneNumber !== userData?.phoneNumber;
-      
-      // Only check user-specific fields for regular users
-      if (userData?.role !== 'ADMIN' && userData?.role !== 'SUPER_ADMIN') {
-        hasChanges = hasChanges ||
-          userInput.fatherPhoneNumber !== userData?.fatherPhoneNumber ||
-          userInput.governorate !== userData?.governorate ||
-          userInput.age !== userData?.age;
-      }
       
       console.log('Change detection:', {
         nameChanged: userInput.name !== userData?.fullName,
-        usernameChanged: userInput.username !== userData?.username,
         phoneChanged: userInput.phoneNumber !== userData?.phoneNumber,
-        fatherPhoneChanged: userData?.role !== 'ADMIN' && userData?.role !== 'SUPER_ADMIN' ? userInput.fatherPhoneNumber !== userData?.fatherPhoneNumber : false,
-        governorateChanged: userData?.role !== 'ADMIN' && userData?.role !== 'SUPER_ADMIN' ? userInput.governorate !== userData?.governorate : false,
-
-        ageChanged: userData?.role !== 'ADMIN' && userData?.role !== 'SUPER_ADMIN' ? userInput.age !== userData?.age : false,
-        userRole: userData?.role,
         hasChanges
       });
       
@@ -147,86 +101,66 @@ export default function Profile() {
     setUserInput({
       ...userInput,
         name: userData?.fullName || "",
-        username: userData?.username || "",
         phoneNumber: userData?.phoneNumber || "",
-        fatherPhoneNumber: userData?.fatherPhoneNumber || "",
-        governorate: userData?.governorate || "",
-        age: userData?.age || "",
       userId: userData?._id,
     });
     }
   }, [userData]);
 
-
-
   return (
     <Layout hideFooter={true}>
-      <section className="flex flex-col gap-6 items-center py-8 px-3 min-h-[100vh]">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-800 dark:to-gray-900" dir="rtl">
+        <section className="flex flex-col gap-8 items-center py-8 px-4 min-h-screen">
+          <div className="w-full max-w-4xl mx-auto">
+            {/* Header Section */}
+            <div className="text-center mb-8">
+              <p className="text-gray-600 dark:text-gray-300 text-lg">
+                إدارة معلوماتك الشخصية
+              </p>
+            </div>
         <form
           autoComplete="off"
           noValidate
           onSubmit={onFormSubmit}
-          className="flex flex-col dark:bg-base-100 relative gap-7 rounded-lg md:py-10 py-7 md:px-7 px-3 md:w-[750px] w-full shadow-custom dark:shadow-xl  "
+          className="w-full max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
         >
-          <div className="flex justify-center items-center">
-            <h1 className="text-center absolute left-6 md:top-auto top-5 text-violet-500 dark:text-[#4D6D8E] md:text-4xl text-3xl font-bold font-inter after:content-[' ']  after:absolute after:-bottom-3.5 after:left-0 after:h-1.5 after:w-[60%] after:rounded-full after:bg-[#4D6D8E] dark:after:bg-[#3A5A7A]-600">
-              الملف الشخصي
-            </h1>
-            {/* more options */}
-            <div className="absolute right-3 top-3">
-              <button
-                type="button"
-                className="absolute right-0 text-gray-500 dark:text-slate-50 font-inter font-[600]"
-                onClick={() => setIsDialogOpen((prev) => !prev)}
-              >
-                <FiMoreVertical size={20} />
-              </button>
-
-              <dialog
-                open={isDialogOpen}
-                className="bg-white dark:bg-base-300 transition-all duration-500 border-[1px] border-gray-200 dark:border-gray-500 rounded-s-xl rounded-ee-xl py-5 shadow-lg w-fit relative right-0 top-7"
-              >
-                <div className="w-full flex flex-col gap-2 items-start">
-                  <button
-                    className="text-gray-700 w-full flex items-center gap-2 dark:text-white px-3 pb-2 border-b-[1px] border-gray-300"
-                    onClick={() => navigate("change-password")}
-                  >
-                    <IoIosLock /> تغيير كلمة المرور
-                  </button>
-                  <button
-                    className="text-[#ff1414] dark:text-red-300 px-3 w-full flex items-center gap-2"
-                    onClick={() => navigate("reset-password")}
-                  >
-                    <IoIosRefresh /> إعادة تعيين كلمة المرور
-                  </button>
-                </div>
-              </dialog>
+          {/* Header Card */}
+          <div className="relative bg-gradient-to-r from-gray-600 to-blue-500 p-8 text-white">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold mb-2">مرحباً، {userData?.fullName || 'المستخدم'}</h2>
+                <p className="text-indigo-100 text-sm md:text-base">
+                  آخر تحديث: {new Date().toLocaleDateString('ar-EG')}
+                </p>
+              </div>
+              
+              {/* Profile Avatar Placeholder */}
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                <FaUser className="text-2xl md:text-3xl text-white" />
+              </div>
             </div>
           </div>
 
           {/* Profile Information Section */}
-          <div className="w-full space-y-6">
-            <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2">
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                المعلومات الشخصية
-              </h2>
-              {!isEditing && (
-                <button
-                  type="button"
-                  onClick={handleEditClick}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#4D6D8E] hover:bg-[#3A5A7A]-600 text-white rounded-lg transition-colors"
-                >
-                  <FaEdit size={14} />
-                  تعديل الملف الشخصي
-                </button>
-              )}
+          <div className="p-8">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+                  المعلومات الشخصية
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  قم بتحديث معلوماتك الشخصية هنا
+                </p>
+              </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Name */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  <FaUser className="text-[#4D6D8E]" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Name Field */}
+              <div className="group">
+                <label className="flex items-center gap-3 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
+                    <FaUser className="text-indigo-600 dark:text-indigo-400" size={16} />
+                  </div>
                   الاسم الكامل
                 </label>
                 <input
@@ -234,33 +168,42 @@ export default function Profile() {
                   value={isEditing ? userInput.name : (userData?.fullName || "")}
                   onChange={(e) => setUserInput({ ...userInput, name: e.target.value })}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#4D6D8E] focus:border-transparent ${
+                  className={`w-full px-4 py-4 border rounded-xl transition-all duration-300 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 ${
                     !isEditing 
-                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 cursor-not-allowed' 
-                      : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                      ? 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 cursor-not-allowed' 
+                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:border-indigo-400 dark:hover:border-blue-500'
                   }`}
                   placeholder="أدخل اسمك الكامل"
                 />
               </div>
 
-              {/* Email */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  <FaEnvelope className="text-green-500" />
+              {/* Email Field */}
+              <div className="group">
+                <label className="flex items-center gap-3 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                    <FaEnvelope className="text-green-600 dark:text-green-400" size={16} />
+                  </div>
                   البريد الإلكتروني
                 </label>
                 <input
                   type="email"
                   value={userData?.email || ""}
                   disabled
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 cursor-not-allowed"
+                  className="w-full px-4 py-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 cursor-not-allowed"
+                  placeholder="البريد الإلكتروني"
                 />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
+                  <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                  لا يمكن تعديل البريد الإلكتروني
+                </p>
               </div>
 
-              {/* Phone Number */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  <FaPhone className="text-green-500" />
+              {/* Phone Number Field */}
+              <div className="group lg:col-span-2">
+                <label className="flex items-center gap-3 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <FaPhone className="text-blue-600 dark:text-blue-400" size={16} />
+                  </div>
                   رقم الهاتف
                 </label>
                 <input
@@ -268,91 +211,79 @@ export default function Profile() {
                   value={isEditing ? userInput.phoneNumber : (userData?.phoneNumber || "")}
                   onChange={(e) => setUserInput({ ...userInput, phoneNumber: e.target.value })}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#4D6D8E] focus:border-transparent ${
+                  className={`w-full px-4 py-4 border rounded-xl transition-all duration-300 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 ${
                     !isEditing 
-                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 cursor-not-allowed' 
-                      : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                      ? 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 cursor-not-allowed' 
+                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:border-blue-400 dark:hover:border-blue-500'
                   }`}
                   placeholder="أدخل رقم هاتفك"
                 />
               </div>
             </div>
           </div>
-
-          {/* Account Information Section */}
-          <div className="w-full space-y-6">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-              معلومات الحساب
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Role */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  <FaIdCard className="text-[#4D6D8E]" />
-                  دور الحساب
-                </label>
-                <input
-                  type="text"
-                  value={userData?.role || "USER"}
-                  disabled
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 cursor-not-allowed"
-                />
-              </div>
-
-
-            </div>
-          </div>
-          {/* submit button */}
-          <div className="w-full flex md:flex-row flex-col md:justify-between justify-center md:gap-0 gap-3">
-            {isEditing ? (
-              <>
-            <button
-              type="submit"
-                  className={`py-3.5 rounded-md mt-3 text-white font-inter md:w-[48%] w-full flex items-center justify-center gap-2 ${
-                    !isChanged || isUpdating 
-                      ? 'bg-gray-400 cursor-not-allowed' 
-                      : 'bg-green-500 hover:bg-green-600'
-                  }`}
-              disabled={!isChanged || isUpdating}
-              onClick={() => {
-                console.log('Save button clicked. isChanged:', isChanged, 'isUpdating:', isUpdating);
-              }}
-            >
-                  {isUpdating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      جاري حفظ التغييرات...
-                    </>
-                  ) : (
-                    <>
-                      <FaSave size={14} />
-                      حفظ التغييرات
-                    </>
-                  )}
-            </button>
-
+          
+          {/* Action Buttons */}
+          <div className="px-8 pb-8">
+            <div className="flex flex-col sm:flex-row gap-4 justify-end">
+              {isEditing ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="px-6 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 font-medium"
+                    disabled={isUpdating}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <FaTimes size={16} />
+                      <span>إلغاء</span>
+                    </div>
+                  </button>
+                  
+                  <button
+                    type="submit"
+                    className={`px-8 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 min-w-[140px] ${
+                      !isChanged || isUpdating 
+                        ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed' 
+                        : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                    }`}
+                    disabled={!isChanged || isUpdating}
+                    onClick={() => {
+                      console.log('Save button clicked. isChanged:', isChanged, 'isUpdating:', isUpdating);
+                    }}
+                  >
+                    {isUpdating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                        <span>جاري الحفظ...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaSave size={16} />
+                        <span>حفظ التغييرات</span>
+                      </>
+                    )}
+                  </button>
+                </>
+              ) : (
                 <button
                   type="button"
-                  onClick={handleCancelEdit}
-                  className="py-3.5 rounded-md bg-gray-500 hover:bg-gray-600 mt-3 text-white font-inter md:w-[48%] w-full flex items-center justify-center gap-2"
-                  disabled={isUpdating}
+                  onClick={handleEditClick}
+                  className="px-8 py-3 bg-gradient-to-r from-gray-600 to-blue-500 hover:from-gray-600 hover:to-blue-700 text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium"
                 >
-                  <FaTimes size={14} />
-                  إلغاء
+                  <div className="flex items-center justify-center gap-2">
+                    <FaEdit size={16} />
+                    <span>
+                    تعديل الملف الشخصي
+                    </span>
+                  </div>
                 </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={handleEdit}
-                className="py-3.5 rounded-md bg-[#4D6D8E] hover:bg-[#4D6D8E]/90 mt-3 text-white font-inter md:w-[48%] w-full flex items-center justify-center gap-2"
-                disabled={isUpdating}
-              ></button>
-            )}
+              )}
+            </div>
           </div>
         </form>
-      </section>
+          </div>
+        </section>
+      </div>
     </Layout>
   );
 }
