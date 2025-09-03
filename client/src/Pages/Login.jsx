@@ -332,32 +332,51 @@ export default function Login() {
             </form>
 
             {/* Google Sign In Button */}
-            <div className="mt-6">
-              <div className="text-center mb-4">
-                <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">أو سجل دخولك باستخدام</span>
-              </div>
-              <div className="flex justify-center relative">
-                <div className={`${googleAuthInProgress || isLoading ? 'opacity-50 pointer-events-none' : ''} transition-opacity duration-200`}>
-                  <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={handleGoogleError}
-                    size="large"
-                    text="signin_with"
-                    locale="ar"
-                    theme="outline"
-                    shape="rectangular"
-                    useOneTap={false}
-                    promptMomentNotification={(notification) => {
-                      console.log('Google prompt notification:', notification);
-                    }}
-                    flow="auth-code"
-                  />
+                        <div className="mt-8">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200 dark:border-gray-600"></div>
                 </div>
-                {googleAuthInProgress && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#4D6D8E]"></div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium">
+                    أو سجل دخولك باستخدام
+                  </span>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-center">
+                <div className={`w-full max-w-sm ${googleAuthInProgress || isLoading ? 'opacity-50 pointer-events-none' : ''} transition-all duration-300`}>
+                  <div className="relative group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl blur opacity-20 group-hover:opacity-30 transition duration-300"></div>
+                    <div className="relative">
+                      <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={handleGoogleError}
+                        size="large"
+                        text="signin_with"
+                        locale="ar"
+                        theme="outline"
+                        shape="rectangular"
+                        useOneTap={false}
+                        promptMomentNotification={(notification) => {
+                          console.log('Google prompt notification:', notification);
+                        }}
+                        flow="auth-code"
+                      />
+                    </div>
+                    
+                    {googleAuthInProgress && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
+                          <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">
+                            جاري تسجيل الدخول...
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
