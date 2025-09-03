@@ -151,7 +151,7 @@ const CourseModal = ({ course, onClose, isOpen }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">المدرس *</label>
+            <label className="block text-sm font-medium mb-1">المدرب *</label>
             <select
               name="instructor"
               value={formData.instructor}
@@ -159,7 +159,7 @@ const CourseModal = ({ course, onClose, isOpen }) => {
               className="w-full p-2 border border-gray-300 rounded-md"
               required
             >
-              <option value="">اختر المدرس</option>
+              <option value="">اختر المدرب</option>
               {instructors?.map((instructor) => (
                 <option key={instructor._id} value={instructor._id}>
                   {instructor.name}

@@ -179,7 +179,7 @@ export default function PrivacyPolicy() {
                       </li>
                       <li className="flex items-start">
                         <FaCheckCircle className="text-green-500 mt-1 ml-3 flex-shrink-0" />
-                        <span>التواصل معك بشأن حسابك والدورات</span>
+                        <span>التواصل معك بشأن حسابك والكورسات</span>
                       </li>
                       <li className="flex items-start">
                         <FaCheckCircle className="text-green-500 mt-1 ml-3 flex-shrink-0" />

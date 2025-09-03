@@ -38,7 +38,7 @@ const SubjectCard = ({ subject, showActions = false, onEdit, onDelete, onToggleF
         <div className="flex items-center gap-2 mb-4">
           <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 dark:from-blue-900/30 dark:to-indigo-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
             <FaGraduationCap className="ml-1.5" />
-            {subject.instructor?.name || 'المدرس غير محدد'}
+            {subject.instructor?.name || 'المدرب غير محدد'}
           </span>
         </div>
 

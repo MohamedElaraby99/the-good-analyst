@@ -145,7 +145,7 @@ const InstructorSection = () => {
               to="/instructors"
               className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#4D6D8E] via-[#3A5A7A]-600 to-[#4D6D8E] hover:from-[#3A5A7A]-600 hover:via-[#3A5A7A]-700 hover:to-[#3A5A7A]-600 text-white rounded-xl font-semibold transition-all duration-200 transform hover:scale-105"
             >
-              عرض جميع المدرسين
+              عرض جميع المدربين
               <FaGraduationCap className="mr-2" />
             </Link>
           </div>
@@ -207,7 +207,7 @@ const InstructorSection = () => {
               {/* Bio */}
               {selectedInstructor.bio && (
                 <div className="mb-8">
-                  <h4 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">نبذة عن المدرس</h4>
+                  <h4 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">نبذة عن المدرب</h4>
                   <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-right">
                     {selectedInstructor.bio}
                   </p>

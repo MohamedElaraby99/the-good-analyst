@@ -264,7 +264,7 @@ const EssayExamDashboard = () => {
                 }}
                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-right"
               >
-                <option value="">كل الدورات</option>
+                <option value="">كل الكورسات</option>
                 {courses
                   ?.filter(c => !selectedStageId || c.stage?._id === selectedStageId)
                   .map(c => (

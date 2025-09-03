@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getUserData, updateUserData } from "../../Redux/Slices/AuthSlice";
 import InputBox from "../../Components/InputBox/InputBox";
-import { FaUserCircle, FaPhone, FaMapMarkerAlt, FaGraduationCap, FaCalendarAlt, FaEnvelope, FaUser, FaIdCard, FaEdit, FaSave, FaTimes, FaBook } from "react-icons/fa";
+import { FaPhone, FaMapMarkerAlt, FaGraduationCap, FaCalendarAlt, FaEnvelope, FaUser, FaIdCard, FaEdit, FaSave, FaTimes, FaBook } from "react-icons/fa";
 import { IoIosLock, IoIosRefresh } from "react-icons/io";
 import { FiMoreVertical } from "react-icons/fi";
 import Layout from "../../Layout/Layout";
@@ -24,29 +24,12 @@ export default function Profile() {
     fatherPhoneNumber: userData?.fatherPhoneNumber || "",
     governorate: userData?.governorate || "",
     age: userData?.age || "",
-    avatar: null,
-    previewImage: null,
     userId: null,
   });
-  const avatarInputRef = useRef(null);
   const [isChanged, setIschanged] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  function handleImageUpload(e) {
-    e.preventDefault();
-    const uploadImage = e.target.files[0];
-    if (uploadImage) {
-      const fileReader = new FileReader();
-      fileReader.readAsDataURL(uploadImage);
-      fileReader.addEventListener("load", function () {
-        setUserInput({
-          ...userInput,
-          previewImage: this.result,
-          avatar: uploadImage,
-        });
-      });
-    }
-  }
+
 
   async function onFormSubmit(e) {
     setIsUpdating(true);
@@ -64,9 +47,6 @@ export default function Profile() {
       formData.append("age", userInput.age);
     }
     
-    if (userInput.avatar) {
-      formData.append("avatar", userInput.avatar);
-    }
     const data = { formData, id: userInput.userId };
     const response = await dispatch(updateUserData(data));
     if (response?.payload?.success) {
@@ -77,12 +57,7 @@ export default function Profile() {
     setIsUpdating(false);
   }
 
-  async function handleCancelSubscription() {
-    const res = await dispatch(cancelCourseBundle());
-    if (res?.payload?.success) {
-      await dispatch(getUserData());
-    }
-  }
+
 
   function handleEditClick() {
     setIsEditing(true);
@@ -94,8 +69,6 @@ export default function Profile() {
       fatherPhoneNumber: userData?.fatherPhoneNumber || "",
       governorate: userData?.governorate || "",
       age: userData?.age || "",
-      avatar: null,
-      previewImage: null,
       userId: userData?._id,
     });
     console.log('Edit mode - userInput set to:', {
@@ -118,8 +91,6 @@ export default function Profile() {
       fatherPhoneNumber: userData?.fatherPhoneNumber || "",
       governorate: userData?.governorate || "",
       age: userData?.age || "",
-      avatar: null,
-      previewImage: null,
       userId: userData?._id,
     });
   }
@@ -129,8 +100,7 @@ export default function Profile() {
       let hasChanges = 
         userInput.name !== userData?.fullName || 
         userInput.username !== userData?.username ||
-        userInput.phoneNumber !== userData?.phoneNumber ||
-        userInput.avatar;
+        userInput.phoneNumber !== userData?.phoneNumber;
       
       // Only check user-specific fields for regular users
       if (userData?.role !== 'ADMIN' && userData?.role !== 'SUPER_ADMIN') {
@@ -148,7 +118,6 @@ export default function Profile() {
         governorateChanged: userData?.role !== 'ADMIN' && userData?.role !== 'SUPER_ADMIN' ? userInput.governorate !== userData?.governorate : false,
 
         ageChanged: userData?.role !== 'ADMIN' && userData?.role !== 'SUPER_ADMIN' ? userInput.age !== userData?.age : false,
-        avatarChanged: !!userInput.avatar,
         userRole: userData?.role,
         hasChanges
       });
@@ -203,32 +172,6 @@ export default function Profile() {
             <h1 className="text-center absolute left-6 md:top-auto top-5 text-violet-500 dark:text-[#4D6D8E] md:text-4xl text-3xl font-bold font-inter after:content-[' ']  after:absolute after:-bottom-3.5 after:left-0 after:h-1.5 after:w-[60%] after:rounded-full after:bg-[#4D6D8E] dark:after:bg-[#3A5A7A]-600">
               الملف الشخصي
             </h1>
-            {/* avatar */}
-            <div
-              className="w-16 h-16 rounded-full overflow-hidden self-center cursor-pointer"
-              onClick={() => avatarInputRef.current.click()}
-            >
-              {userData?.avatar?.secure_url || userInput.previewImage ? (
-                <img
-                  src={
-                    userInput.previewImage
-                      ? userInput.previewImage
-                      : userData?.avatar?.secure_url
-                  }
-                  alt="avatar"
-                  className="h-full w-full"
-                />
-              ) : (
-                <FaUserCircle className="h-full w-full" />
-              )}
-              <input
-                type="file"
-                accept=".png, .jpeg, .jpg"
-                className="hidden"
-                ref={avatarInputRef}
-                onChange={handleImageUpload}
-              />
-            </div>
             {/* more options */}
             <div className="absolute right-3 top-3">
               <button
@@ -508,16 +451,12 @@ export default function Profile() {
                 </button>
               </>
             ) : (
-              /* show cancel subscription btn if Active */
-              userData?.subscription?.status === "active" && (
               <button
                 type="button"
-                onClick={handleCancelSubscription}
-                className="py-3.5 rounded-md bg-[#f32e2e] mt-3 text-white font-inter md:w-[48%] w-full"
-              >
-                إلغاء الاشتراك
-              </button>
-              )
+                onClick={handleEdit}
+                className="py-3.5 rounded-md bg-[#4D6D8E] hover:bg-[#4D6D8E]/90 mt-3 text-white font-inter md:w-[48%] w-full flex items-center justify-center gap-2"
+                disabled={isUpdating}
+              ></button>
             )}
           </div>
         </form>

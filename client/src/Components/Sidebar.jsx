@@ -178,7 +178,7 @@ export default function Sidebar({ hideBar = false }) {
             <li>
               <Link to="/instructors" className="flex gap-3 items-center text-gray-700 dark:text-white hover:text-[#3A5A7A]-600 dark:hover:text-[#4D6D8E] transition-colors py-2" onClick={closeSidebar}>
                 <FaChalkboardTeacher size={16} className="text-gray-500 dark:text-slate-100" />
-                المدرسين
+                المدربين
               </Link>
             </li>
             {/* Admin Services Dropdown */}
@@ -325,15 +325,7 @@ export default function Sidebar({ hideBar = false }) {
                   className="w-8 h-8 rounded-full bg-gradient-to-r from-[#4D6D8E] to-[#3A5A7A]-600 flex items-center justify-center text-white font-bold text-xs shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer border-2 border-white dark:border-gray-700"
                   onClick={closeSidebar}
                 >
-                  {data?.avatar?.secure_url ? (
-                    <img 
-                      src={data.avatar.secure_url} 
-                      alt="Profile" 
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    getUserInitials(data?.fullName)
-                  )}
+                  {getUserInitials(data?.fullName)}
                 </Link>
                 
                 {/* User Name */}

@@ -202,12 +202,22 @@ const authSlice = createSlice({
 
         // for Google OAuth signup  
         builder.addCase(createAccountWithGoogle.fulfilled, (state, action) => {
-            localStorage.setItem("data", JSON.stringify(action?.payload?.user));
-            localStorage.setItem("role", action?.payload?.user?.role);
+            console.log('🔧 Google OAuth signup fulfilled - received data:', action?.payload);
+            const user = action?.payload?.user;
+            console.log('🔧 User object from Google OAuth:', user);
+            
+            localStorage.setItem("data", JSON.stringify(user));
+            localStorage.setItem("role", user?.role);
             localStorage.setItem("isLoggedIn", true);
-            state.data = action?.payload?.user;
-            state.role = action?.payload?.user?.role;
+            state.data = user;
+            state.role = user?.role;
             state.isLoggedIn = true;
+            
+            console.log('🔧 Updated Redux state after Google OAuth:', {
+                isLoggedIn: state.isLoggedIn,
+                role: state.role,
+                userFullName: state.data?.fullName
+            });
         })
 
         // for login

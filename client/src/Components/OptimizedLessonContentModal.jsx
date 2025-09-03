@@ -613,7 +613,7 @@ const OptimizedLessonContentModal = ({ isOpen, onClose, courseId, lessonId, unit
                               </div>
                               {feedbackItems.length > 0 && (
                                 <div className="text-right bg-purple-50 dark:bg-gray-700/40 rounded-md p-3">
-                                  <div className="text-sm font-medium text-purple-700 dark:text-purple-300 mb-1">ملاحظات المدرس:</div>
+                                  <div className="text-sm font-medium text-purple-700 dark:text-purple-300 mb-1">ملاحظات المدرب:</div>
                                   <ul className="space-y-1">
                                     {feedbackItems.sort((a,b)=>a.idx-b.idx).map((f) => (
                                       <li key={f.idx} className="text-sm text-gray-700 dark:text-gray-200">
@@ -631,7 +631,7 @@ const OptimizedLessonContentModal = ({ isOpen, onClose, courseId, lessonId, unit
                           );
                         })()
                       ) : (
-                        <div className="text-sm text-gray-600">انتظر تقييم المدرس</div>
+                        <div className="text-sm text-gray-600">انتظر تقييم المدرب</div>
                       )}
                     </div>
                   );

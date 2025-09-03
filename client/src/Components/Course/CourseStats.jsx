@@ -23,7 +23,7 @@ const CourseStats = ({ stats, loading }) => {
 
   const statsData = [
     {
-      title: "إجمالي الدورات",
+      title: "إجمالي الكورسات",
       value: stats?.totalCourses || 0,
       icon: FaBook,
       color: "from-[#4D6D8E] to-[#3A5A7A]-600",

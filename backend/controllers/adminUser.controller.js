@@ -203,11 +203,7 @@ const createUser = async (req, res, next) => {
             username: username.toLowerCase(),
             password,
             role,
-            isActive: true,
-            avatar: {
-                public_id: role === 'USER' ? phoneNumber : email,
-                secure_url: "",
-            }
+            isActive: true
         };
 
         // Add role-specific fields

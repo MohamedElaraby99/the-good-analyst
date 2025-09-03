@@ -1906,7 +1906,7 @@ const CourseContentManager = () => {
         <div className="flex-1 p-3 md:p-6">
           <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-right text-[#3A5A7A]-700 dark:text-[#3A5A7A]-300 flex items-center gap-2">
             <FaLayerGroup />
-            إدارة محتوى الدورات
+            إدارة محتوى الكورسات
           </h1>
           {!selectedCourse ? (
             <div className="text-center text-gray-400 py-10 md:py-20 text-base md:text-lg">اختر دورة من القائمة لعرض وحداتها ودروسها</div>

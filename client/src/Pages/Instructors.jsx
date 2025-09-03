@@ -86,7 +86,7 @@ export default function Instructors() {
                 مدرسونا المتميزون
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                تعرف على فريقنا من المدرسين المحترفين والخبراء في مجالاتهم
+                تعرف على فريقنا من المدربين المحترفين والخبراء في مجالاتهم
               </p>
             </div>
 
@@ -98,7 +98,7 @@ export default function Instructors() {
                     <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="البحث في المدرسين..."
+                      placeholder="البحث في المدربين..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full pr-10 pl-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#4D6D8E] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"

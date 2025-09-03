@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { BsPersonCircle } from "react-icons/bs";
+
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import Layout from "../Layout/Layout";
 import { createAccount, createAccountWithGoogle } from "../Redux/Slices/AuthSlice";
 import InputBox from "../Components/InputBox/InputBox";
 import CaptchaComponent from "../Components/CaptchaComponent";
-import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaUserPlus, FaGraduationCap, FaCamera, FaUpload, FaPhone, FaMapMarkerAlt, FaBook, FaExclamationTriangle, FaTimes, FaCheckCircle, FaInfoCircle } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaUserPlus, FaPhone } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { axiosInstance } from "../Helpers/axiosInstance";
 import { useEffect } from "react";
@@ -19,7 +19,6 @@ export default function Signup() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [previewImage, setPreviewImage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [captchaSessionId, setCaptchaSessionId] = useState("");
@@ -29,8 +28,7 @@ export default function Signup() {
     fullName: "",
     email: "",
     password: "",
-    phoneNumber: "",
-    avatar: "",
+    phoneNumber: ""
   });
 
   // Google OAuth Client ID - You'll need to get this from Google Cloud Console
@@ -123,23 +121,7 @@ export default function Signup() {
     });
   }
 
-  function getImage(event) {
-    event.preventDefault();
-    // getting the image
-    const uploadedImage = event.target.files[0];
 
-    if (uploadedImage) {
-      setSignupData({
-        ...signupData,
-        avatar: uploadedImage,
-      });
-      const fileReader = new FileReader();
-      fileReader.readAsDataURL(uploadedImage);
-      fileReader.addEventListener("load", function () {
-        setPreviewImage(this.result);
-      });
-    }
-  }
 
   // CAPTCHA handlers
   function handleCaptchaVerified(sessionId) {
@@ -243,77 +225,25 @@ export default function Signup() {
       deviceInfo: deviceInfo
     };
 
-    // Handle avatar file separately if present
-    if (signupData.avatar) {
-      const formData = new FormData();
-      formData.append("avatar", signupData.avatar);
-      
-      // Add captchaSessionId at the top level for middleware access
-      formData.append("captchaSessionId", captchaSessionId);
-      
-      // Add device info as separate fields for device fingerprint middleware
-      formData.append("deviceInfo[platform]", deviceInfo.platform);
-      formData.append("deviceInfo[screenResolution]", deviceInfo.screenResolution);
-      formData.append("deviceInfo[timezone]", deviceInfo.timezone);
-      formData.append("deviceInfo[additionalInfo][browser]", deviceInfo.additionalInfo.browser);
-      formData.append("deviceInfo[additionalInfo][browserVersion]", deviceInfo.additionalInfo.browserVersion);
-      formData.append("deviceInfo[additionalInfo][os]", deviceInfo.additionalInfo.os);
-      formData.append("deviceInfo[additionalInfo][language]", deviceInfo.additionalInfo.language);
-      formData.append("deviceInfo[additionalInfo][colorDepth]", deviceInfo.additionalInfo.colorDepth);
-      formData.append("deviceInfo[additionalInfo][touchSupport]", deviceInfo.additionalInfo.touchSupport);
-      
-      // Add all other data as JSON string
-      formData.append("data", JSON.stringify(requestData));
-      
-      // Debug: Log what's being sent
-      console.log('=== SENDING FORMDATA REQUEST ===');
-      console.log('FormData contents:');
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      }
-      console.log('captchaSessionId from state:', captchaSessionId);
-      console.log('=== END DEBUG ===');
-      
-      // dispatch create account action with FormData
-      const response = await dispatch(createAccount(formData));
-      if (response?.payload?.success) {
-        setSignupData({
-          fullName: "",
-          email: "",
-          password: "",
-          phoneNumber: "",
-          avatar: "",
-        });
+    // Send as JSON since no file upload
+    console.log('=== SENDING JSON REQUEST ===');
+    console.log('Request data:', requestData);
+    console.log('captchaSessionId from state:', captchaSessionId);
+    console.log('=== END DEBUG ===');
+    
+    const response = await dispatch(createAccount(requestData));
+    if (response?.payload?.success) {
+      setSignupData({
+        fullName: "",
+        email: "",
+        password: "",
+        phoneNumber: ""
+      });
 
-        setPreviewImage("");
-        setIsCaptchaVerified(false);
-        setCaptchaSessionId("");
+      setIsCaptchaVerified(false);
+      setCaptchaSessionId("");
 
-        navigate("/");
-      }
-    } else {
-      // No avatar file, send as JSON
-      console.log('=== SENDING JSON REQUEST ===');
-      console.log('Request data:', requestData);
-      console.log('captchaSessionId from state:', captchaSessionId);
-      console.log('=== END DEBUG ===');
-      
-      const response = await dispatch(createAccount(requestData));
-      if (response?.payload?.success) {
-        setSignupData({
-          fullName: "",
-          email: "",
-          password: "",
-          phoneNumber: "",
-          avatar: "",
-        });
-
-        setPreviewImage("");
-        setIsCaptchaVerified(false);
-        setCaptchaSessionId("");
-
-        navigate("/");
-      }
+      navigate("/");
     }
   }
 
@@ -460,50 +390,6 @@ export default function Signup() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-right">
                   سيتم استخدام هذا الرقم لتسجيل الدخول إلى حسابك
                 </p>
-              </div>
-
-              {/* Enhanced Avatar Upload - Optional */}
-              <div className="group">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-right">
-                  الصورة الشخصية (اختياري)
-                </label>
-                <div className="flex items-center space-x-reverse space-x-4">
-                  <div className="relative">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-r from-[#3A5A7A]-100 to-[#3A5A7A]-100 dark:from-[#3A5A7A]-900/20 dark:to-[#3A5A7A]-900/20 flex items-center justify-center border-2 border-gray-200 dark:border-gray-600 overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
-                      {previewImage ? (
-                        <img 
-                          src={previewImage} 
-                          alt="Profile preview" 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <BsPersonCircle className="w-10 h-10 text-gray-400" />
-                      )}
-                    </div>
-                    {previewImage && (
-                      <div className="absolute -top-1 -left-1 w-7 h-7 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                        <FaCamera className="w-4 h-4 text-white" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <label htmlFor="image_uploads" className="cursor-pointer">
-                      <div className="flex items-center justify-center px-6 py-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-[#4D6D8E] dark:hover:border-[#4D6D8E] transition-all duration-300 hover:shadow-md bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600">
-                        <FaUpload className="w-5 h-5 text-[#4D6D8E] ml-2" />
-                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                          {previewImage ? "تغيير الصورة" : "رفع صورة"}
-                        </span>
-                      </div>
-                    </label>
-                    <input
-                      id="image_uploads"
-                      onChange={getImage}
-                      type="file"
-                      accept=".jpg, .jpeg, .png, image/*"
-                      className="hidden"
-                    />
-                  </div>
-                </div>
               </div>
 
               {/* CAPTCHA Component */}

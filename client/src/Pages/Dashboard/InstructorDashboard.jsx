@@ -90,10 +90,10 @@ const InstructorDashboard = () => {
           id: editingInstructor._id, 
           instructorData: instructorData 
         })).unwrap();
-        toast.success('تم تحديث المدرس بنجاح');
+        toast.success('تم تحديث المدرب بنجاح');
       } else {
         await dispatch(createInstructor(instructorData)).unwrap();
-        toast.success('تم إنشاء المدرس بنجاح');
+        toast.success('تم إنشاء المدرب بنجاح');
       }
       
       setShowModal(false);
@@ -125,10 +125,10 @@ const InstructorDashboard = () => {
   };
 
   const handleDelete = async (instructorId) => {
-    if (window.confirm('هل أنت متأكد من حذف هذا المدرس؟')) {
+    if (window.confirm('هل أنت متأكد من حذف هذا المدرب؟')) {
       try {
         await dispatch(deleteInstructor(instructorId)).unwrap();
-        toast.success('تم حذف المدرس بنجاح');
+        toast.success('تم حذف المدرب بنجاح');
       } catch (error) {
         console.error('Error deleting instructor:', error);
       }
@@ -186,7 +186,7 @@ const InstructorDashboard = () => {
             غير مصرح لك بالوصول إلى هذه الصفحة
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            يجب أن تكون مدير للوصول إلى لوحة تحكم المدرسين
+            يجب أن تكون مدير للوصول إلى لوحة تحكم المدربين
           </p>
         </div>
       </div>
@@ -201,7 +201,7 @@ const InstructorDashboard = () => {
         <div className="flex flex-col md:flex-row justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-              إدارة المدرسين
+              إدارة المدربين
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
               إدارة مدرسين ال وإعداداتهم
@@ -228,7 +228,7 @@ const InstructorDashboard = () => {
                 <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="البحث في المدرسين..."
+                  placeholder="البحث في المدربين..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pr-10 pl-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#4D6D8E] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -241,9 +241,9 @@ const InstructorDashboard = () => {
                 onChange={(e) => setFilterFeatured(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#4D6D8E] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">جميع المدرسين</option>
-                <option value="true">المدرسين المميزين</option>
-                <option value="false">المدرسين العاديين</option>
+                <option value="">جميع المدربين</option>
+                <option value="true">المدربين المميزين</option>
+                <option value="false">المدربين العاديين</option>
               </select>
             </div>
           </div>
@@ -394,7 +394,7 @@ const InstructorDashboard = () => {
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-                  {editingInstructor ? 'تعديل المدرس' : 'إضافة مدرس جديد'}
+                  {editingInstructor ? 'تعديل المدرب' : 'إضافة مدرس جديد'}
                 </h2>
                 <button
                   onClick={() => {

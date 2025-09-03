@@ -14,7 +14,14 @@ export default function Navbar() {
   const dispatch = useDispatch();
 
   // Debug: Simple check to see what's happening
-  console.log("🔍 Navbar - User state:", { user, role, hasUser: !!user?.fullName });
+  console.log("🔍 Navbar - User state:", { 
+    user, 
+    role, 
+    hasUser: !!user?.fullName,
+    userFullName: user?.fullName,
+    userEmail: user?.email,
+    isLoggedIn: !!user
+  });
 
   // Use scroll to top utility
   useScrollToTop();
@@ -77,7 +84,7 @@ export default function Navbar() {
   const menuItems = [
     { name: "الرئيسية", path: "/", icon: FaHome },
     { name: "الكورسات ", path: "/subjects", icon: FaGraduationCap },
-    { name: "الدورات", path: "/courses", icon: FaList },
+    { name: "الكورسات", path: "/courses", icon: FaList },
     
     { name: "المدونة", path: "/blogs", icon: FaBlog },
     { name: "الأسئلة والأجوبة", path: "/qa", icon: FaQuestionCircle },
@@ -122,12 +129,20 @@ export default function Navbar() {
 
           {/* Right Side */}
           <div className="flex items-center space-x-4">
+            {/* Burger Menu Button - Always visible */}
+            <button
+              onClick={toggleMenu}
+              className="burger-menu-button p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-[#4D6D8E] dark:hover:text-[#4D6D8E] hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 md:inline-flex"
+              aria-label="Toggle menu"
+            >
+              <FaBars className="w-6 h-6" />
+            </button>
 
             {/* Sign Up Button - ONLY show when NO user is logged in */}
             {!user?.fullName && (
               <Link
                 to="/signup"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold text-white bg-[#4D6D8E] hover:bg-[#3A5A7A] shadow-lg hover:shadow-xl transition-all duration-300 border border-[#4D6D8E]/40"
+                className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold text-white bg-[#4D6D8E] hover:bg-[#3A5A7A] shadow-lg hover:shadow-xl transition-all duration-300 border border-[#4D6D8E]/40"
               >
                 <FaPlus className="w-4 h-4" />
                 <span>سجل الآن</span>
@@ -137,7 +152,7 @@ export default function Navbar() {
             {!user?.fullName && (
               <Link
                 to="/login"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold border-2 border-[#4D6D8E] text-[#4D6D8E] dark:text-[#A5B7CD] hover:bg-[#4D6D8E] hover:text-white transition-all duration-300 shadow-md hover:shadow-xl"
+                className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold border-2 border-[#4D6D8E] text-[#4D6D8E] dark:text-[#A5B7CD] hover:bg-[#4D6D8E] hover:text-white transition-all duration-300 shadow-md hover:shadow-xl"
               >
                 <FaUser className="w-4 h-4" />
                 <span>تسجيل الدخول</span>

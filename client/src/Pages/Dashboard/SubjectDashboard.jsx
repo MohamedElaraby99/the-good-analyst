@@ -64,7 +64,7 @@ export default function SubjectDashboard() {
     }
 
     if (!formData.instructor) {
-      newErrors.instructor = "المدرس مطلوب";
+      newErrors.instructor = "المدرب مطلوب";
     }
 
     // Only require image for new subjects, not for editing
@@ -319,7 +319,7 @@ export default function SubjectDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      المدرس *
+                      المدرب *
                     </label>
                     <select
                       name="instructor"
@@ -329,7 +329,7 @@ export default function SubjectDashboard() {
                         errors.instructor ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                       }`}
                     >
-                      <option value="">اختر المدرس</option>
+                      <option value="">اختر المدرب</option>
                       {instructors.map((instructor) => (
                         <option key={instructor._id} value={instructor._id}>{instructor.name}</option>
                       ))}
@@ -463,7 +463,7 @@ export default function SubjectDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      المدرس *
+                      المدرب *
                     </label>
                     <select
                       name="instructor"
@@ -473,7 +473,7 @@ export default function SubjectDashboard() {
                         errors.instructor ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                       }`}
                     >
-                      <option value="">اختر المدرس</option>
+                      <option value="">اختر المدرب</option>
                       {instructors.map((instructor) => (
                         <option key={instructor._id} value={instructor._id}>{instructor.name}</option>
                       ))}

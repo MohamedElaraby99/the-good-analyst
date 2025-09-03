@@ -19,7 +19,7 @@ const CourseDetailsModal = ({ course, onClose }) => {
         <div className="space-y-2">
           <div><span className="font-semibold">العنوان:</span> {course.title}</div>
           <div><span className="font-semibold">الوصف:</span> {course.description}</div>
-          {course.instructor && <div><span className="font-semibold">المدرس:</span> {course.instructor.name}</div>}
+          {course.instructor && <div><span className="font-semibold">المدرب:</span> {course.instructor.name}</div>}
           {course.stage && <div><span className="font-semibold">المرحلة:</span> {course.stage.name}</div>}
           {course.category && <div><span className="font-semibold">فئة المرحلة:</span> {course.category.name}</div>}
           <div><span className="font-semibold">عدد الوحدات:</span> {course.units?.length || 0}</div>
@@ -171,7 +171,7 @@ const CourseList = ({ courses, loading, pagination, onEditCourse, role, onRefres
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {course.instructor.name}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">المدرس</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">المدرب</p>
                   </div>
                 </div>
               )}

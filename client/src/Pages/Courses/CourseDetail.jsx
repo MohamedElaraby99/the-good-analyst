@@ -652,7 +652,7 @@ export default function CourseDetail() {
                       <h3 className="font-semibold text-gray-900 dark:text-white">
                         {currentCourse.instructor?.name || 'غير محدد'}
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-400">المدرس </p>
+                      <p className="text-gray-600 dark:text-gray-400">المدرب </p>
                     </div>
                   </div>
                 </div>

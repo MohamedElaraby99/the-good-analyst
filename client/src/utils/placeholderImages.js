@@ -20,16 +20,6 @@ export const placeholderImages = {
     </svg>
   `)}`,
 
-  // User avatar placeholder
-  avatar: `data:image/svg+xml;base64,${btoa(`
-    <svg width="250" height="250" xmlns="http://www.w3.org/2000/svg">
-      <rect width="250" height="250" fill="#4F46E5"/>
-      <text x="125" y="125" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle" dominant-baseline="middle">
-        User Avatar
-      </text>
-    </svg>
-  `)}`,
-
   // Small blog thumbnail placeholder
   blogSmall: `data:image/svg+xml;base64,${btoa(`
     <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">

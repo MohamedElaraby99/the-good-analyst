@@ -314,12 +314,7 @@ input::placeholder, textarea::placeholder {
   transform: scale(0.95);
 }
 
-/* Ensure burger menu is hidden on desktop */
-@media (min-width: 768px) {
-  .burger-menu-button {
-    display: none !important;
-  }
-}
+
 
 /* Right-side drawer styles */
 .drawer-side-right {

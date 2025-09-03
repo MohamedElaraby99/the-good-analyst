@@ -104,7 +104,7 @@ const AnimatedHero = ({ onGetStarted }) => {
                 to="/courses"
                 className="px-6 py-4 rounded-xl text-lg font-semibold border border-[#181eae] text-[#181eae] hover:bg-[#181eae]/10 transition-all"
               >
-                استكشف الدورات
+                استكشف الكورسات
               </Link>
             </div>
             {/* Stats strip */}

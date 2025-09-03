@@ -66,13 +66,13 @@ export default function InstructorDetail() {
           <div className="container mx-auto px-4 py-16">
             <div className="text-center">
               <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
-                المدرس غير موجود
+                المدرب غير موجود
               </h1>
               <button
                 onClick={() => navigate('/instructors')}
                 className="bg-[#3A5A7A]-600 hover:bg-[#3A5A7A]-700 text-white px-6 py-3 rounded-lg"
               >
-                العودة لقائمة المدرسين
+                العودة لقائمة المدربين
               </button>
             </div>
           </div>
@@ -91,7 +91,7 @@ export default function InstructorDetail() {
             className="flex items-center gap-2 text-[#3A5A7A]-600 hover:text-[#3A5A7A]-700 dark:text-[#4D6D8E] dark:hover:text-[#3A5A7A]-300 mb-8 transition-colors"
           >
             <FaArrowLeft />
-            العودة لقائمة المدرسين
+            العودة لقائمة المدربين
           </button>
 
           {/* Instructor Header */}
@@ -182,10 +182,10 @@ export default function InstructorDetail() {
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2 text-right">
                   <FaBookOpen className="text-[#3A5A7A]-600" />
-                  نبذة عن المدرس
+                  نبذة عن المدرب
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-right">
-                  {instructor.bio || 'لا توجد نبذة متاحة لهذا المدرس.'}
+                  {instructor.bio || 'لا توجد نبذة متاحة لهذا المدرب.'}
                 </p>
               </div>
 

@@ -23,7 +23,7 @@ const CourseFilters = ({ filters, onFilterChange, onClearFilters }) => {
         </div>
         <input
           type="text"
-          placeholder="البحث في الدورات..."
+          placeholder="البحث في الكورسات..."
           value={filters.search}
           onChange={(e) => handleInputChange('search', e.target.value)}
           className="block w-full pr-10 pl-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4D6D8E] focus:border-[#4D6D8E]"
@@ -125,7 +125,7 @@ const CourseFilters = ({ filters, onFilterChange, onClearFilters }) => {
               onChange={(e) => handleInputChange('featured', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4D6D8E]"
             >
-              <option value="">جميع الدورات</option>
+              <option value="">جميع الكورسات</option>
               <option value="true">مميزة فقط</option>
               <option value="false">غير مميزة</option>
             </select>

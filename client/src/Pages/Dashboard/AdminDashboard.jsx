@@ -255,7 +255,7 @@ export default function AdminDashboard() {
 
   // Enhanced chart data for platform growth
   const platformGrowthData = {
-    labels: ["المستخدمين", "الدورات", "الدروس", "أكواد مُولدة", "أكواد مستخدمة"],
+    labels: ["المستخدمين", "الكورسات", "الدروس", "أكواد مُولدة", "أكواد مستخدمة"],
     datasets: [
       {
         label: "مقاييس نمو ال",
@@ -661,7 +661,7 @@ export default function AdminDashboard() {
                   className="group p-3 lg:p-4 bg-gradient-to-r from-[#4D6D8E] to-[#3A5A7A]-600 rounded-lg lg:rounded-xl text-white hover:from-[#3A5A7A]-600 hover:to-[#3A5A7A]-700 transition-all duration-200 transform hover:scale-105"
                 >
                   <FaBook className="text-lg lg:text-2xl mx-auto mb-1 lg:mb-2 group-hover:scale-110 transition-transform duration-200" />
-                  <span className="text-xs lg:text-sm font-medium">إدارة الدورات</span>
+                  <span className="text-xs lg:text-sm font-medium">إدارة الكورسات</span>
                 </button>
                 <button
                   onClick={() => navigate("/admin/subject-dashboard")}
@@ -682,7 +682,7 @@ export default function AdminDashboard() {
                   className="group p-3 lg:p-4 bg-gradient-to-r from-[#4D6D8E] to-[#3A5A7A]-600 rounded-lg lg:rounded-xl text-white hover:from-[#3A5A7A]-600 hover:to-[#3A5A7A]-700 transition-all duration-200 transform hover:scale-105"
                 >
                   <FaClipboardCheck className="text-lg lg:text-2xl mx-auto mb-1 lg:mb-2 group-hover:scale-110 transition-transform duration-200" />
-                  <span className="text-xs lg:text-sm font-medium">إدارة محتوى الدورات</span>
+                  <span className="text-xs lg:text-sm font-medium">إدارة محتوى الكورسات</span>
                 </button>
                 <button
                   onClick={() => navigate("/admin/user-progress")}
@@ -731,14 +731,14 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* إدارة المدرسين */}
+                {/* إدارة المدربين */}
                 <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 lg:p-6 text-white hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 transform hover:scale-105 cursor-pointer shadow-lg hover:shadow-xl" onClick={() => navigate("/admin/instructors")}>
                   <div className="flex items-center justify-between mb-3">
                     <FaChalkboardTeacher className="text-2xl lg:text-3xl text-emerald-200" />
                     <div className="w-3 h-3 bg-emerald-200 rounded-full animate-pulse"></div>
                   </div>
-                  <h4 className="text-lg lg:text-xl font-bold mb-2">إدارة المدرسين</h4>
-                  <p className="text-emerald-100 text-sm lg:text-base opacity-90">إدارة المدرسين والدورات التدريبية</p>
+                  <h4 className="text-lg lg:text-xl font-bold mb-2">إدارة المدربين</h4>
+                  <p className="text-emerald-100 text-sm lg:text-base opacity-90">إدارة المدربين والكورسات التدريبية</p>
                   <div className="mt-4 flex items-center justify-between">
                     <span className="text-xs text-emerald-200">إدارة كاملة</span>
                     <FaArrowUp className="text-emerald-200 transform rotate-45" />

@@ -112,7 +112,7 @@ export default function CoursesPage() {
                 الكورسات المتاحة
               </h1>
               <p className="text-xl text-[#3A5A7A]-100 max-w-3xl mx-auto">
-                اكتشف مجموعة واسعة من الدورات التعليمية المميزة بقيادة خبراء الصناعة
+                اكتشف مجموعة واسعة من الكورسات التعليمية المميزة بقيادة خبراء الصناعة
               </p>
             </div>
           </div>
@@ -126,7 +126,7 @@ export default function CoursesPage() {
               <FaSearch className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
               <input
                 type="text"
-                placeholder="ابحث في الدورات..."
+                placeholder="ابحث في الكورسات..."
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
                 className="w-full pr-12 pl-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#4D6D8E] focus:border-transparent"
@@ -212,7 +212,7 @@ export default function CoursesPage() {
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3A5A7A]-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600 dark:text-gray-400">جاري تحميل الدورات...</p>
+              <p className="mt-4 text-gray-600 dark:text-gray-400">جاري تحميل الكورسات...</p>
             </div>
           ) : filteredCourses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

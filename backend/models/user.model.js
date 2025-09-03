@@ -91,14 +91,7 @@ const userSchema = new Schema({
         min: [5, 'Age must be at least 5'],
         max: [100, 'Age cannot exceed 100']
     },
-    avatar: {
-        public_id: {
-            type: String
-        },
-        secure_url: {
-            type: String
-        }
-    },
+
     role: {
         type: String,
         default: 'USER',

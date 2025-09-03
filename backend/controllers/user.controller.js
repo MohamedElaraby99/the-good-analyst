@@ -2,7 +2,7 @@ import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
-import fs from 'fs';
+
 import cloudinary from 'cloudinary';
 import { OAuth2Client } from 'google-auth-library';
 import AppError from "../utils/error.utils.js";
@@ -56,25 +56,7 @@ const registerWithGoogle = async (req, res, next, googleToken, deviceInfo) => {
         // Create new user with Google data
         const generatedUsername = email.split('@')[0] + Math.random().toString(36).substr(2, 5);
         
-        // Handle profile picture with fallback for rate limiting
-        let avatarUrl = "";
-        let avatarPublicId = `google_${googleId}`;
-        
-        if (picture) {
-            try {
-                // Test if the Google image URL is accessible
-                const imageResponse = await fetch(picture, { method: 'HEAD' });
-                if (imageResponse.ok) {
-                    avatarUrl = picture;
-                } else {
-                    console.log('Google profile image not accessible, using placeholder');
-                    avatarUrl = "";
-                }
-            } catch (error) {
-                console.log('Error accessing Google profile image:', error.message);
-                avatarUrl = "";
-            }
-        }
+
         
         const userData = {
             fullName: name,
@@ -82,10 +64,6 @@ const registerWithGoogle = async (req, res, next, googleToken, deviceInfo) => {
             email,
             password: googleId, // Use Google ID as password
             role: 'USER',
-            avatar: {
-                public_id: avatarPublicId,
-                secure_url: avatarUrl,
-            },
             googleId,
             isGoogleAuth: true
         };
@@ -95,6 +73,14 @@ const registerWithGoogle = async (req, res, next, googleToken, deviceInfo) => {
         if (!user) {
             return next(new AppError("Google registration failed, please try again", 400));
         }
+        
+        console.log('Google OAuth - Created user:', {
+            id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            role: user.role,
+            isGoogleAuth: user.isGoogleAuth
+        });
         
         const token = await user.generateJWTToken();
         user.password = undefined;
@@ -176,11 +162,7 @@ const register = async (req, res, next) => {
             email,
             password,
             phoneNumber,
-            role: 'USER',
-            avatar: {
-                public_id: phoneNumber,
-                secure_url: "",
-            },
+            role: 'USER'
         };
 
         // Save user in the database and log the user in
@@ -188,43 +170,6 @@ const register = async (req, res, next) => {
 
         if (!user) {
             return next(new AppError("User registration failed, please try again", 400));
-        }
-
-        // File upload
-        if (req.file) {
-            try {
-                // Use local file storage for avatars instead of Cloudinary
-                const fileName = req.file.filename;
-                
-                // Create avatars directory if it doesn't exist
-                const avatarsDir = 'uploads/avatars';
-                if (!fs.existsSync(avatarsDir)) {
-                    fs.mkdirSync(avatarsDir, { recursive: true });
-                }
-                
-                // Move file to avatars directory
-                const oldPath = `uploads/${fileName}`;
-                const newPath = `${avatarsDir}/${fileName}`;
-                
-                if (fs.existsSync(oldPath)) {
-                    fs.renameSync(oldPath, newPath);
-                }
-                
-                // Generate the proper production URL
-                const avatarUrl = generateProductionFileUrl(fileName, 'avatars');
-                
-                // Save the avatar information
-                user.avatar.public_id = `local_${fileName}`;
-                user.avatar.secure_url = avatarUrl;
-                
-                console.log('Avatar saved locally:', avatarUrl);
-                
-            } catch (e) {
-                console.log('File upload error:', e.message);
-                // Set placeholder avatar if upload fails
-                user.avatar.public_id = 'placeholder';
-                user.avatar.secure_url = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgZmlsbD0iIzRGNDZFNSIvPgogIDx0ZXh0IHg9IjEyNSIgeT0iMTI1IiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj4KICAgIFVzZXIgQXZhdGFyCiAgPC90ZXh0Pgo8L3N2Zz4K';
-            }
         }
 
         await user.save();
@@ -648,52 +593,6 @@ const updateUser = async (req, res, next) => {
         }
         if (age) {
             user.age = parseInt(age);
-        }
-
-        if (req.file) {
-            try {
-                // Use local file storage for avatars instead of Cloudinary
-                const fileName = req.file.filename;
-                
-                // Create avatars directory if it doesn't exist
-                const avatarsDir = 'uploads/avatars';
-                if (!fs.existsSync(avatarsDir)) {
-                    fs.mkdirSync(avatarsDir, { recursive: true });
-                }
-                
-                // Move file to avatars directory
-                const oldPath = `uploads/${fileName}`;
-                const newPath = `${avatarsDir}/${fileName}`;
-                
-                if (fs.existsSync(oldPath)) {
-                    fs.renameSync(oldPath, newPath);
-                }
-                
-                // Remove old avatar file if it exists and is not a placeholder
-                if (user.avatar.public_id && user.avatar.public_id !== 'placeholder' && user.avatar.public_id.startsWith('local_')) {
-                    // Extract filename from old URL to build proper file path
-                    const oldFileName = user.avatar.secure_url.split('/').pop();
-                    const oldAvatarPath = `uploads/avatars/${oldFileName}`;
-                    if (fs.existsSync(oldAvatarPath)) {
-                        fs.rmSync(oldAvatarPath);
-                    }
-                }
-                
-                // Generate the proper production URL
-                const avatarUrl = generateProductionFileUrl(fileName, 'avatars');
-                
-                // Save the avatar information
-                user.avatar.public_id = `local_${fileName}`;
-                user.avatar.secure_url = avatarUrl;
-                
-                console.log('Avatar saved locally:', avatarUrl);
-                
-            } catch (e) {
-                console.log('File upload error:', e.message);
-                // Set placeholder avatar if upload fails
-                user.avatar.public_id = 'placeholder';
-                user.avatar.secure_url = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgZmlsbD0iIzRGNDZFNSIvPgogIDx0ZXh0IHg9IjEyNSIgeT0iMTI1IiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj4KICAgIFVzZXIgQXZhdGFyCiAgPC90ZXh0Pgo8L3N2Zz4K';
-            }
         }
 
         await user.save();
