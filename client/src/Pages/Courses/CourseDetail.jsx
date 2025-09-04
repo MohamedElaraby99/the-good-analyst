@@ -3,11 +3,6 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import Layout from '../../Layout/Layout';
 import { getCourseById, getCourseWithProgression } from '../../Redux/Slices/CourseSlice';
-import { 
-  purchaseContent, 
-  checkPurchaseStatus, 
-  getWalletBalance 
-} from '../../Redux/Slices/PaymentSlice';
 import { PaymentSuccessAlert, PaymentErrorAlert } from '../../Components/ModernAlert';
 import WatchButton from '../../Components/WatchButton';
 import OptimizedLessonContentModal from '../../Components/OptimizedLessonContentModal';
@@ -44,16 +39,12 @@ export default function CourseDetail() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { currentCourse, lessonProgression, loading } = useSelector((state) => state.course);
-  const { walletBalance, purchaseStatus, loading: paymentLoading } = useSelector((state) => state.payment);
   const { data: user, isLoggedIn } = useSelector((state) => state.auth);
   const courseAccessState = useSelector((state) => state.courseAccess.byCourseId[id]);
   const [accessAlertShown, setAccessAlertShown] = useState(false);
   const hidePrices = !!courseAccessState?.hasAccess && courseAccessState?.source === 'code';
-  const hasAnyPurchase = (() => {
-    if (!currentCourse || !purchaseStatus) return false;
-    const prefix = `${currentCourse._id}-`;
-    return Object.keys(purchaseStatus).some(k => k.startsWith(prefix) && purchaseStatus[k]);
-  })();
+  // All content is now free - no purchase needed
+  const hasAnyPurchase = true;
 
   const [expandedUnits, setExpandedUnits] = useState(new Set());
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
@@ -117,41 +108,7 @@ export default function CourseDetail() {
     }
   }, [dispatch, user, isLoggedIn]);
 
-  // Check purchase status for all items when course loads
-  useEffect(() => {
-    if (currentCourse && user && isLoggedIn) {
-      // Check درس
-      currentCourse.directLessons?.forEach(lesson => {
-        if (lesson.price > 0) {
-          dispatch(checkPurchaseStatus({
-            courseId: currentCourse._id,
-            purchaseType: 'lesson',
-            itemId: lesson._id
-          }));
-        }
-      });
-
-      // Check units and their lessons
-      currentCourse.units?.forEach(unit => {
-        if (unit.price > 0) {
-          dispatch(checkPurchaseStatus({
-            courseId: currentCourse._id,
-            purchaseType: 'unit',
-            itemId: unit._id
-          }));
-        }
-        unit.lessons?.forEach(lesson => {
-          if (lesson.price > 0) {
-            dispatch(checkPurchaseStatus({
-              courseId: currentCourse._id,
-              purchaseType: 'lesson',
-              itemId: lesson._id
-            }));
-          }
-        });
-      });
-    }
-  }, [currentCourse, user, isLoggedIn, dispatch]);
+  // All content is now free - no purchase status checking needed
 
   const toggleUnit = (unitId) => {
     setExpandedUnits(prev => {
@@ -261,44 +218,10 @@ export default function CourseDetail() {
     }
   }, [user, currentCourse, courseAccessState, hasAnyPurchase, accessAlertShown, dispatch]);
 
+  // All content is now free - no purchase needed
   const handlePurchaseClick = (item, purchaseType) => {
-    if (!user || !isLoggedIn) {
-      setAlertMessage('يرجى تسجيل الدخول أولاً للوصول إلى هذا المحتوى');
-      setShowErrorAlert(true);
-      setTimeout(() => {
-        navigate('/login', { state: { from: `/courses/${id}` } });
-      }, 2000);
-      return;
-    }
-    
-    // Admin users have access to all content, no need to purchase
-    if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
-      setAlertMessage('أنت مدير النظام - لديك صلاحية الوصول لجميع المحتوى');
-      setShowSuccessAlert(true);
-      return;
-    }
-    
-    if (item.price <= 0) {
-      setAlertMessage('هذا المحتوى مجاني');
-      setShowSuccessAlert(true);
-      return;
-    }
-
-    // Check if code-based access has expired
-    if (courseAccessState?.source === 'code' && courseAccessState?.accessEndAt) {
-      const now = new Date();
-      const endDate = new Date(courseAccessState.accessEndAt);
-      const isExpired = endDate <= now;
-      
-      if (isExpired) {
-        setAlertMessage('انتهت صلاحية الوصول عبر الكود. يرجى إعادة تفعيل كود جديد أو شراء المحتوى.');
-        setShowErrorAlert(true);
-        return;
-      }
-    }
-
-    setSelectedItem({ ...item, purchaseType });
-    setShowPurchaseModal(true);
+    setAlertMessage('جميع المحتوى مجاني ومتاح للجميع');
+    setShowSuccessAlert(true);
   };
 
   const handleRedeemCode = async (e) => {
@@ -350,24 +273,12 @@ export default function CourseDetail() {
     setShowPreviewModal(true);
   };
 
+  // All content is now free - no purchase needed
   const handlePurchaseConfirm = async () => {
-    if (!selectedItem) return;
-
-    try {
-      await dispatch(purchaseContent({
-        courseId: currentCourse._id,
-        purchaseType: selectedItem.purchaseType,
-        itemId: selectedItem._id
-      })).unwrap();
-      
-      setShowPurchaseModal(false);
-      setSelectedItem(null);
-      setAlertMessage('تم الشراء بنجاح!');
-      setShowSuccessAlert(true);
-    } catch (error) {
-      setAlertMessage(error.message || 'حدث خطأ أثناء الشراء');
-      setShowErrorAlert(true);
-    }
+    setShowPurchaseModal(false);
+    setSelectedItem(null);
+    setAlertMessage('جميع المحتوى مجاني ومتاح للجميع');
+    setShowSuccessAlert(true);
   };
 
 
@@ -429,88 +340,16 @@ export default function CourseDetail() {
     }
   };
 
+  // All content is now free - always show watch button
   const renderPurchaseButton = (item, purchaseType, showButton = true, unitId = null) => {
-    
-    // Check lesson access based on progression
-    const hasAccess = hasLessonAccess(item._id, unitId);
-    const accessReason = getLessonAccessReason(item._id, unitId);
-
-    // Admin users have access to all content
-    if (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
-      return (
-        <WatchButton
-          item={item}
-          purchaseType={purchaseType}
-          onWatch={(item, purchaseType) => handleWatchClick(item, purchaseType, unitId)}
-          variant="primary"
-          showButton={showButton}
-        />
-      );
-    }
-
-    // If user doesn't have access to this lesson, show locked state
-    if (!hasAccess) {
-      return (
-        <div className="flex items-center gap-2">
-          <button 
-            disabled
-            className="text-gray-400 cursor-not-allowed flex items-center gap-1"
-            title={accessReason || 'يجب اجتياز الامتحان في الدرس السابق'}
-          >
-            <FaLock />
-            <span>مقفل</span>
-          </button>
-        </div>
-      );
-    }
-
-    if (item.price <= 0) {
-      return (
-        <WatchButton
-          item={item}
-          purchaseType={purchaseType}
-          onWatch={(item, purchaseType) => handleWatchClick(item, purchaseType, unitId)}
-          variant="primary"
-          showButton={showButton}
-        />
-      );
-    }
-
-    if (isItemPurchased(purchaseType, item._id)) {
-      return (
-        <WatchButton
-          item={item}
-          purchaseType={purchaseType}
-          onWatch={(item, purchaseType) => handleWatchClick(item, purchaseType, unitId)}
-          variant="primary"
-          showButton={showButton}
-        />
-      );
-    }
-
-    // Don't show purchase buttons if showButton is false
-    if (!showButton) {
-      return null;
-    }
-
     return (
-      <div className="flex items-center gap-2">
-        <button 
-          onClick={() => handlePreviewClick(item, purchaseType)}
-          className="text-[#3A5A7A]-600 hover:text-[#3A5A7A]-700 flex items-center gap-1"
-        >
-          <FaEye />
-          <span>معاينة</span>
-        </button>
-        <button 
-          onClick={() => handlePurchaseClick(item, purchaseType)}
-          className="text-[#3A5A7A]-600 hover:text-[#3A5A7A]-700 flex items-center gap-1"
-          disabled={paymentLoading}
-        >
-          <FaLock />
-          <span>شراء</span>
-        </button>
-      </div>
+      <WatchButton
+        item={item}
+        purchaseType={purchaseType}
+        onWatch={(item, purchaseType) => handleWatchClick(item, purchaseType, unitId)}
+        variant="primary"
+        showButton={showButton}
+      />
     );
   };
 
@@ -839,13 +678,6 @@ export default function CourseDetail() {
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
-                            {!hidePrices && lesson.price > 0 && (
-                              <span className={`text-sm font-medium ${
-                                hasAccess ? 'text-green-600' : 'text-gray-400'
-                              }`}>
-                                {lesson.price} جنيه
-                              </span>
-                            )}
                             {renderPurchaseButton(lesson, 'lesson')}
                           </div>
                         </div>
@@ -886,11 +718,6 @@ export default function CourseDetail() {
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
-                            {unit.price > 0 && (
-                              <span className="text-sm font-medium text-green-600">
-                                {unit.price} جنيه
-                              </span>
-                                                        )}
                             {expandedUnits.has(unit._id || unitIndex) ? (
                               <FaChevronUp className="text-gray-400" />
                             ) : (
@@ -949,13 +776,6 @@ export default function CourseDetail() {
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                      {!hidePrices && lesson.price > 0 && (
-                                        <span className={`text-sm font-medium ${
-                                          hasAccess ? 'text-green-600' : 'text-gray-400'
-                                        }`}>
-                                          {lesson.price} جنيه
-                                        </span>
-                                      )}
                                       {renderPurchaseButton(lesson, 'lesson', true, unit._id)}
                                     </div>
                                   </div>
@@ -987,68 +807,6 @@ export default function CourseDetail() {
           </div>
         </div>
 
-        {/* Purchase Modal */}
-        {showPurchaseModal && selectedItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  تأكيد الشراء
-                </h3>
-                <button
-                  onClick={() => setShowPurchaseModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <FaTimes />
-                </button>
-              </div>
-              
-              <div className="mb-4">
-                <p className="text-gray-600 dark:text-gray-300 mb-2">
-                  {selectedItem.purchaseType === 'lesson' ? 'درس:' : 'وحدة:'}
-                </p>
-                <p className="font-medium text-gray-900 dark:text-white mb-2">
-                  {selectedItem.title}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                  {selectedItem.description}
-                </p>
-                
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <span className="text-gray-600 dark:text-gray-300">السعر:</span>
-                  <span className="font-semibold text-green-600">{selectedItem.price} جنيه</span>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mt-2">
-                  <span className="text-gray-600 dark:text-gray-300">رصيد المحفظة:</span>
-                  <span className="font-semibold text-[#3A5A7A]-600">{walletBalance} جنيه</span>
-                </div>
-              </div>
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowPurchaseModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                >
-                  إلغاء
-                </button>
-                <button
-                  onClick={handlePurchaseConfirm}
-                  disabled={paymentLoading || walletBalance < selectedItem.price}
-                  className="flex-1 px-4 py-2 bg-[#3A5A7A]-600 text-white rounded-lg hover:bg-[#3A5A7A]-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                  {paymentLoading ? 'جاري الشراء...' : 'تأكيد الشراء'}
-                </button>
-              </div>
-              
-              {walletBalance < selectedItem.price && (
-                <p className="text-red-600 text-sm mt-2 text-center">
-                  رصيد المحفظة غير كافي
-                </p>
-              )}
-            </div>
-          </div>
-                 )}
 
          {/* Preview Modal */}
          {showPreviewModal && previewItem && (
@@ -1224,32 +982,15 @@ export default function CourseDetail() {
                   >
                     إغلاق
                   </button>
-                  {user && isLoggedIn ? (
-                    <button
-                      onClick={() => {
-                        setShowPreviewModal(false);
-                        setSelectedItem({ ...previewItem, purchaseType: previewItem.purchaseType });
-                        setShowPurchaseModal(true);
-                      }}
-                      className="flex-1 px-4 py-2 bg-[#3A5A7A]-600 text-white rounded-lg hover:bg-[#3A5A7A]-700"
-                    >
-                      شراء الدرس
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setShowPreviewModal(false);
-                        setAlertMessage('يرجى تسجيل الدخول أولاً للشراء');
-                        setShowErrorAlert(true);
-                        setTimeout(() => {
-                          navigate('/login', { state: { from: `/courses/${id}` } });
-                        }, 2000);
-                      }}
-                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                    >
-                      تسجيل الدخول للشراء
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setShowPreviewModal(false);
+                      handleWatchClick(previewItem, previewItem.purchaseType);
+                    }}
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    مشاهدة المحتوى
+                  </button>
                 </div>
              </div>
            </div>

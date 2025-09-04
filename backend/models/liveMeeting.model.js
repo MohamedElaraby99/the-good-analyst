@@ -45,11 +45,6 @@ const liveMeetingSchema = new Schema({
     ref: 'Instructor',
     required: [true, 'Instructor is required']
   },
-  stage: {
-    type: Schema.Types.ObjectId,
-    ref: 'Stage',
-    required: [true, 'Stage is required']
-  },
   subject: {
     type: Schema.Types.ObjectId,
     ref: 'Subject',
@@ -107,7 +102,7 @@ const liveMeetingSchema = new Schema({
 
 // Index for efficient queries
 liveMeetingSchema.index({ scheduledDate: 1, status: 1 });
-liveMeetingSchema.index({ stage: 1, subject: 1 });
+liveMeetingSchema.index({ subject: 1 });
 liveMeetingSchema.index({ 'attendees.user': 1 });
 
 // Virtual for getting attendees count

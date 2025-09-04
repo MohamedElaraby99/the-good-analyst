@@ -15,10 +15,6 @@ const lessonSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
-  price: {
-    type: Number,
-    default: 0
-  },
   content: {
     type: String,
     trim: true,
@@ -125,10 +121,6 @@ const unitSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
-  price: {
-    type: Number,
-    default: 0
-  },
   lessons: [lessonSchema]
 }, {
   timestamps: true
@@ -148,11 +140,6 @@ const courseSchema = new mongoose.Schema({
   instructor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Instructor',
-    required: true
-  },
-  stage: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Stage',
     required: true
   },
   subject: {

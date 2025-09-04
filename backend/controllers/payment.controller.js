@@ -141,119 +141,13 @@ export const simulateCoursePurchase = asyncHandler(async (req, res) => {
     );
 });
 
-// Purchase lesson or unit
+// Purchase lesson or unit - DISABLED (all content is now free)
 export const purchaseContent = asyncHandler(async (req, res) => {
-    const { courseId, purchaseType, itemId } = req.body;
-    const userId = req.user.id;
-
-    // Validate input
-    if (!courseId || !purchaseType || !itemId) {
-        throw new ApiError(400, "Course ID, purchase type, and item ID are required");
-    }
-
-    if (!['lesson', 'unit'].includes(purchaseType)) {
-        throw new ApiError(400, "Purchase type must be 'lesson' or 'unit'");
-    }
-
-    // Get user with wallet
-    const user = await User.findById(userId);
-    if (!user) {
-        throw new ApiError(404, "User not found");
-    }
-
-    // Get course
-    const course = await Course.findById(courseId);
-    if (!course) {
-        throw new ApiError(404, "Course not found");
-    }
-
-    let item, price, description;
-
-    // Find the item and get its price
-    if (purchaseType === 'lesson') {
-        // Check direct lessons first
-        const directLesson = course.directLessons?.find(lesson => lesson._id.toString() === itemId);
-        if (directLesson) {
-            item = directLesson;
-            price = directLesson.price || 0;
-            description = `شراء درس: ${directLesson.title}`;
-        } else {
-            // Check lessons in units
-            for (const unit of course.units || []) {
-                const lesson = unit.lessons?.find(lesson => lesson._id.toString() === itemId);
-                if (lesson) {
-                    item = lesson;
-                    price = lesson.price || 0;
-                    description = `شراء درس: ${lesson.title} من وحدة: ${unit.title}`;
-                    break;
-                }
-            }
-        }
-    } else if (purchaseType === 'unit') {
-        const unit = course.units?.find(unit => unit._id.toString() === itemId);
-        if (unit) {
-            item = unit;
-            price = unit.price || 0;
-            description = `شراء وحدة: ${unit.title}`;
-        }
-    }
-
-    if (!item) {
-        throw new ApiError(404, "Item not found");
-    }
-
-    if (price <= 0) {
-        throw new ApiError(400, "This item is free and doesn't require purchase");
-    }
-
-    // Check if already purchased
-    const existingPurchase = await Purchase.findOne({
-        userId,
-        courseId,
-        purchaseType,
-        purchasedItemId: itemId
-    });
-
-    if (existingPurchase) {
-        throw new ApiError(400, "You have already purchased this item");
-    }
-
-    // Check wallet balance
-    if (user.wallet.balance < price) {
-        throw new ApiError(400, "Insufficient wallet balance");
-    }
-
-    // Create purchase record
-    const purchase = await Purchase.create({
-        userId,
-        courseId,
-        purchaseType,
-        purchasedItemId: itemId,
-        amount: price,
-        description
-    });
-
-    // Deduct from wallet
-    user.wallet.balance -= price;
-    
-    // Add transaction record
-    user.wallet.transactions.push({
-        type: 'purchase',
-        amount: price,
-        code: `PURCHASE_${purchase._id.toString().slice(-8).toUpperCase()}`,
-        description: description,
-        date: new Date(),
-        status: 'completed'
-    });
-
-    await user.save();
-
+    // All content is now free - no purchase required
     return res.status(200).json(
         new ApiResponse(200, {
-            purchase,
-            newBalance: user.wallet.balance,
-            message: "Purchase completed successfully"
-        }, "Purchase successful")
+            message: "All content is now free and accessible without purchase"
+        }, "Content is free")
     );
 });
 
@@ -270,27 +164,14 @@ export const getPurchaseHistory = asyncHandler(async (req, res) => {
     );
 });
 
-// Check if user has purchased specific content
+// Check if user has purchased specific content - DISABLED (all content is now free)
 export const checkPurchaseStatus = asyncHandler(async (req, res) => {
-    const { courseId, purchaseType, itemId } = req.query;
-    const userId = req.user.id;
-
-    if (!courseId || !purchaseType || !itemId) {
-        throw new ApiError(400, "Course ID, purchase type, and item ID are required");
-    }
-
-    const purchase = await Purchase.findOne({
-        userId,
-        courseId,
-        purchaseType,
-        purchasedItemId: itemId
-    });
-
+    // All content is now free - always return as purchased
     return res.status(200).json(
         new ApiResponse(200, { 
-            isPurchased: !!purchase,
-            purchase 
-        }, "Purchase status checked successfully")
+            isPurchased: true,
+            purchase: null 
+        }, "All content is free")
     );
 });
 

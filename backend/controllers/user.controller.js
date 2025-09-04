@@ -114,7 +114,7 @@ const register = async (req, res, next) => {
             }
         }
 
-        const { fullName, username, email, password, phoneNumber, fatherPhoneNumber, governorate, stage, age, adminCode, deviceInfo, googleToken } = requestBody;
+        const { fullName, username, email, password, phoneNumber, fatherPhoneNumber, governorate, age, adminCode, deviceInfo, googleToken } = requestBody;
 
         // Handle Google OAuth registration
         if (googleToken) {
@@ -233,10 +233,6 @@ const register = async (req, res, next) => {
 
         const token = await user.generateJWTToken();
 
-        // Populate stage for regular users
-        if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && user.stage) {
-            await user.populate('stage', 'name');
-        }
 
         res.cookie("token", token, cookieOptions);
 
@@ -370,10 +366,6 @@ const login = async (req, res, next) => {
 
         user.password = undefined;
 
-        // Populate stage for regular users
-        if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && user.stage) {
-            await user.populate('stage', 'name');
-        }
 
         res.cookie('token', token, cookieOptions)
 
@@ -412,7 +404,7 @@ const logout = async (req, res, next) => {
 const getProfile = async (req, res, next) => {
     try {
         const { id } = req.user;
-        const user = await userModel.findById(id).populate('stage', 'name');
+        const user = await userModel.findById(id);
 
         if (!user) {
             return next(new AppError('User not found', 404));
@@ -425,7 +417,6 @@ const getProfile = async (req, res, next) => {
             phoneNumber: user.phoneNumber,
             fatherPhoneNumber: user.fatherPhoneNumber,
             governorate: user.governorate,
-            stage: user.stage,
             age: user.age,
             role: user.role
         });
@@ -553,10 +544,10 @@ const changePassword = async (req, res, next) => {
 // update profile
 const updateUser = async (req, res, next) => {
     try {
-        const { fullName, username, phoneNumber, fatherPhoneNumber, governorate, stage, age } = req.body;
+        const { fullName, username, phoneNumber, fatherPhoneNumber, governorate, age } = req.body;
         const { id } = req.user;
 
-        console.log('Update user data:', { fullName, username, phoneNumber, fatherPhoneNumber, governorate, stage, age });
+        console.log('Update user data:', { fullName, username, phoneNumber, fatherPhoneNumber, governorate, age });
 
         const user = await userModel.findById(id);
 
@@ -587,9 +578,6 @@ const updateUser = async (req, res, next) => {
         }
         if (governorate) {
             user.governorate = governorate;
-        }
-        if (stage) {
-            user.stage = stage;
         }
         if (age) {
             user.age = parseInt(age);

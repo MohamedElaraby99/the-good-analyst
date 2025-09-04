@@ -378,17 +378,6 @@ const CourseStructureModal = ({ courseId, onClose, isOpen }) => {
                     placeholder="ادخل وصف الوحدة"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">السعر</label>
-                  <input
-                    type="number"
-                    value={newUnit.price || ''}
-                    onChange={(e) => setNewUnit({ ...newUnit, price: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    placeholder="ادخل سعر الوحدة"
-                    min="0"
-                  />
-                </div>
               </div>
               <div className="flex gap-2 mt-6">
                 <button
@@ -434,21 +423,10 @@ const CourseStructureModal = ({ courseId, onClose, isOpen }) => {
                       placeholder="ادخل وصف الوحدة"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">السعر</label>
-                  <input
-                    type="number"
-                    value={selectedUnit.price !== undefined ? selectedUnit.price : ''}
-                    onChange={(e) => setSelectedUnit({ ...selectedUnit, price: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    placeholder="ادخل سعر الوحدة"
-                    min="0"
-                  />
-                </div>
               </div>
               <div className="flex gap-2 mt-6">
                 <button
-                  onClick={() => handleUpdateUnit(selectedUnit._id, { title: selectedUnit.title, description: selectedUnit.description, price: selectedUnit.price })}
+                  onClick={() => handleUpdateUnit(selectedUnit._id, { title: selectedUnit.title, description: selectedUnit.description })}
                   className="flex-1 bg-[#3A5A7A]-600 text-white py-2 rounded-md hover:bg-[#3A5A7A]-700"
                 >
                   تعديل الوحدة
@@ -488,17 +466,6 @@ const CourseStructureModal = ({ courseId, onClose, isOpen }) => {
                     className="w-full p-2 border border-gray-300 rounded-md"
                     rows="3"
                     placeholder="ادخل وصف الدرس"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">السعر</label>
-                  <input
-                    type="number"
-                    value={newLesson.price || ''}
-                    onChange={(e) => setNewLesson({ ...newLesson, price: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    placeholder="ادخل سعر الدرس"
-                    min="0"
                   />
                 </div>
               </div>

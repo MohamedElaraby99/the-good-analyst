@@ -76,13 +76,6 @@ const userSchema = new Schema({
         trim: true
     },
 
-    stage: {
-        type: Schema.Types.ObjectId,
-        ref: 'Stage',
-        required: function() {
-            return !['ADMIN', 'SUPER_ADMIN'].includes(this.role) && !this.isGoogleAuth;
-        }
-    },
     age: {
         type: Number,
         required: function() {

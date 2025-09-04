@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createCourse, updateCourse } from '../../Redux/Slices/CourseSlice';
 import { getAllInstructors } from '../../Redux/Slices/InstructorSlice';
-import { getAllStages } from '../../Redux/Slices/StageSlice';
 import { getAllSubjects } from '../../Redux/Slices/SubjectSlice';
 import { FaTimes } from 'react-icons/fa';
 
@@ -10,14 +9,12 @@ const CourseModal = ({ course, onClose, isOpen }) => {
   const dispatch = useDispatch();
   const { createLoading, updateLoading } = useSelector((state) => state.course);
   const { instructors = [] } = useSelector((state) => state.instructor);
-  const { stages = [] } = useSelector((state) => state.stage);
   const { subjects = [] } = useSelector((state) => state.subject);
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     instructor: '',
-    stage: '',
     subject: ''
   });
 
@@ -30,7 +27,6 @@ const CourseModal = ({ course, onClose, isOpen }) => {
         title: course.title || '',
         description: course.description || '',
         instructor: course.instructor?._id || course.instructor || '',
-        stage: course.stage?._id || course.stage || '',
         subject: course.subject?._id || course.subject || ''
       });
     } else {
@@ -38,7 +34,6 @@ const CourseModal = ({ course, onClose, isOpen }) => {
         title: '',
         description: '',
         instructor: '',
-        stage: '',
         subject: ''
       });
     }
@@ -73,7 +68,7 @@ const CourseModal = ({ course, onClose, isOpen }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.title.trim() || !formData.instructor || !formData.stage || !formData.subject) {
+    if (!formData.title.trim() || !formData.instructor || !formData.subject) {
       alert('يرجى ملء جميع الحقول المطلوبة');
       return;
     }
@@ -83,7 +78,6 @@ const CourseModal = ({ course, onClose, isOpen }) => {
         title: formData.title.trim(),
         description: formData.description.trim(),
         instructor: formData.instructor,
-        stage: formData.stage,
         subject: formData.subject
       };
 
@@ -170,23 +164,6 @@ const CourseModal = ({ course, onClose, isOpen }) => {
 
 
 
-          <div>
-            <label className="block text-sm font-medium mb-1">المرحلة *</label>
-            <select
-              name="stage"
-              value={formData.stage}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              required
-            >
-              <option value="">اختر المرحلة</option>
-              {stages?.map((stage) => (
-                <option key={stage._id} value={stage._id}>
-                  {stage.name}
-                </option>
-              ))}
-            </select>
-          </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">المادة *</label>

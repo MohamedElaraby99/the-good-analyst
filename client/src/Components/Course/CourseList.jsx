@@ -20,7 +20,6 @@ const CourseDetailsModal = ({ course, onClose }) => {
           <div><span className="font-semibold">العنوان:</span> {course.title}</div>
           <div><span className="font-semibold">الوصف:</span> {course.description}</div>
           {course.instructor && <div><span className="font-semibold">المدرب:</span> {course.instructor.name}</div>}
-          {course.stage && <div><span className="font-semibold">المرحلة:</span> {course.stage.name}</div>}
           {course.category && <div><span className="font-semibold">فئة المرحلة:</span> {course.category.name}</div>}
           <div><span className="font-semibold">عدد الوحدات:</span> {course.units?.length || 0}</div>
           <div><span className="font-semibold">مقدمة:</span> {course.directLessons?.length || 0}</div>
@@ -176,14 +175,6 @@ const CourseList = ({ courses, loading, pagination, onEditCourse, role, onRefres
                 </div>
               )}
               
-              {/* Stage Info */}
-              {course.stage && (
-                <div className="mb-3">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#3A5A7A]-100 text-[#3A5A7A]-800 dark:bg-[#3A5A7A]-900 dark:text-[#3A5A7A]-200">
-                    {course.stage.name}
-                  </span>
-                </div>
-              )}
               
               {/* Featured Badge */}
               {course.featured && (

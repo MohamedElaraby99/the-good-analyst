@@ -30,7 +30,6 @@ import courseAccessRoutes from './routes/courseAccess.routes.js';
 
 import gradeRoutes from './routes/grade.routes.js';
 import instructorRoutes from './routes/instructor.routes.js';
-import stageRoutes from './routes/stage.routes.js';
 import express from 'express';
 import connectToDb from './config/db.config.js';
 import errorMiddleware from './middleware/error.middleware.js';
@@ -50,6 +49,8 @@ const allowedOrigins = new Set([
   process.env.FRONTEND_URL,
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
   'http://localhost:5190',
   'http://127.0.0.1:5190',
   'https://thegoodanalyst.net',
@@ -102,8 +103,11 @@ app.use((req, res, next) => {
     return;
   }
   
+  // Allow any localhost origin in development
+  const isLocalhostOrigin = origin && /^http:\/\/(localhost|127\.0\.0\.1|\[::1\]):\d+$/.test(origin);
+
   // Set CORS headers for actual requests
-  if (origin && allowedOrigins.has(origin)) {
+  if (origin && (allowedOrigins.has(origin) || isLocalhostOrigin)) {
     res.header('Access-Control-Allow-Origin', origin);
   } else if (!origin) {
     // If no origin header, allow the request (for same-origin requests)
@@ -311,7 +315,6 @@ app.use('/api/v1/live-meetings', checkDeviceAuthorization, logDeviceAccess);
 
 app.use('/api/v1/grades', gradeRoutes);
 app.use('/api/v1/instructors', instructorRoutes);
-app.use('/api/v1/stages', stageRoutes);
  
 
 app.all('*', (req, res) => {

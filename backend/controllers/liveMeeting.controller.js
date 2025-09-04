@@ -1,7 +1,6 @@
 import LiveMeeting from '../models/liveMeeting.model.js';
 import User from '../models/user.model.js';
 import Instructor from '../models/instructor.model.js';
-import Stage from '../models/stage.model.js';
 import Subject from '../models/subject.model.js';
 import AppError from '../utils/error.utils.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -17,7 +16,6 @@ export const createLiveMeeting = asyncHandler(async (req, res, next) => {
     scheduledDate,
     duration,
     instructor,
-    stage,
     subject,
     attendees,
     maxAttendees,
@@ -26,7 +24,7 @@ export const createLiveMeeting = asyncHandler(async (req, res, next) => {
   } = req.body;
 
   // Validate required fields
-  if (!title || !description || !googleMeetLink || !scheduledDate || !duration || !instructor || !stage || !subject) {
+  if (!title || !description || !googleMeetLink || !scheduledDate || !duration || !instructor || !subject) {
     return next(new AppError('جميع الحقول المطلوبة يجب ملؤها', 400));
   }
 
@@ -42,11 +40,6 @@ export const createLiveMeeting = asyncHandler(async (req, res, next) => {
     return next(new AppError('المحاضر غير موجود', 404));
   }
 
-  // Validate stage exists
-  const stageExists = await Stage.findById(stage);
-  if (!stageExists) {
-    return next(new AppError('المرحلة غير موجودة', 404));
-  }
 
   // Validate subject exists
   const subjectExists = await Subject.findById(subject);
@@ -73,7 +66,6 @@ export const createLiveMeeting = asyncHandler(async (req, res, next) => {
     scheduledDate: scheduledDateTime,
     duration,
     instructor,
-    stage,
     subject,
     attendees: validatedAttendees,
     maxAttendees: maxAttendees || 100,
@@ -85,7 +77,6 @@ export const createLiveMeeting = asyncHandler(async (req, res, next) => {
   // Populate the created meeting
   await liveMeeting.populate([
     { path: 'instructor', select: 'name email' },
-    { path: 'stage', select: 'name' },
     { path: 'subject', select: 'title' },
     { path: 'attendees.user', select: 'fullName email' },
     { path: 'createdBy', select: 'fullName email' }
@@ -102,7 +93,7 @@ export const createLiveMeeting = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/live-meetings/admin
 // @access  Admin
 export const getAllLiveMeetings = asyncHandler(async (req, res, next) => {
-  const { page = 1, limit = 10, status, stage, subject, instructor, startDate, endDate } = req.query;
+  const { page = 1, limit = 10, status, subject, instructor, startDate, endDate } = req.query;
 
   // Build filter object
   let filter = {};
@@ -111,9 +102,6 @@ export const getAllLiveMeetings = asyncHandler(async (req, res, next) => {
     filter.status = status;
   }
 
-  if (stage) {
-    filter.stage = stage;
-  }
 
   if (subject) {
     filter.subject = subject;
@@ -139,7 +127,6 @@ export const getAllLiveMeetings = asyncHandler(async (req, res, next) => {
 
   const liveMeetings = await LiveMeeting.find(filter)
     .populate('instructor', 'name email')
-    .populate('stage', 'name')
     .populate('subject', 'title')
     .populate('attendees.user', 'fullName email')
     .populate('createdBy', 'fullName email')
@@ -187,7 +174,6 @@ export const getUserLiveMeetings = asyncHandler(async (req, res, next) => {
 
   const liveMeetings = await LiveMeeting.find(filter)
     .populate('instructor', 'name email')
-    .populate('stage', 'name')
     .populate('subject', 'title')
     .sort({ scheduledDate: 1 })
     .skip((page - 1) * limit)
@@ -211,13 +197,11 @@ export const getUserLiveMeetings = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/live-meetings/upcoming
 // @access  User
 export const getUpcomingLiveMeetings = asyncHandler(async (req, res, next) => {
-  const userStage = req.user.stage;
   const userId = req.user._id || req.user.id;
   
   // Debug logging
   console.log('Debug - User requesting upcoming meetings:', {
     userId,
-    userStage,
     userRole: req.user.role
   });
 
@@ -227,14 +211,10 @@ export const getUpcomingLiveMeetings = asyncHandler(async (req, res, next) => {
     scheduledDate: { $gte: new Date() }
   };
 
-  // If user has a stage, filter by stage, otherwise show all upcoming meetings
-  if (userStage) {
-    filter.stage = userStage;
-  }
+  // Show all upcoming meetings for all users
 
   const upcomingMeetings = await LiveMeeting.find(filter)
     .populate('instructor', 'name email')
-    .populate('stage', 'name')
     .populate('subject', 'title')
     .populate('attendees.user', 'fullName email')
     .sort({ scheduledDate: 1 })
@@ -246,8 +226,6 @@ export const getUpcomingLiveMeetings = asyncHandler(async (req, res, next) => {
     meetings: upcomingMeetings.map(m => ({
       id: m._id,
       title: m.title,
-      stage: m.stage?.name,
-      stageId: m.stage?._id,
       scheduledDate: m.scheduledDate
     }))
   });
@@ -288,7 +266,6 @@ export const getLiveMeeting = asyncHandler(async (req, res, next) => {
 
   const liveMeeting = await LiveMeeting.findById(id)
     .populate('instructor', 'name email')
-    .populate('stage', 'name')
     .populate('subject', 'title')
     .populate('attendees.user', 'fullName email')
     .populate('createdBy', 'fullName email');
@@ -402,7 +379,6 @@ export const updateLiveMeeting = asyncHandler(async (req, res, next) => {
     { new: true, runValidators: true }
   )
     .populate('instructor', 'name email')
-    .populate('stage', 'name')
     .populate('subject', 'title')
     .populate('attendees.user', 'fullName email')
     .populate('createdBy', 'fullName email');

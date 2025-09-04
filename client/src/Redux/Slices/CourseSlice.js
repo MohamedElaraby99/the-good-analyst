@@ -107,7 +107,6 @@ export const createCourse = createAsyncThunk(
       formData.append('title', courseData.title);
       formData.append('description', courseData.description);
       formData.append('instructor', courseData.instructor);
-      formData.append('stage', courseData.stage);
       formData.append('subject', courseData.subject);
       // category removed from backend
       
@@ -137,7 +136,6 @@ export const updateCourse = createAsyncThunk(
       formData.append('title', courseData.title);
       formData.append('description', courseData.description);
       formData.append('instructor', courseData.instructor);
-      formData.append('stage', courseData.stage);
       formData.append('subject', courseData.subject);
       // category removed from backend
       
@@ -359,13 +357,6 @@ const courseSlice = createSlice({
         console.log('🔍 Frontend received courses data:', {
           totalCourses: action.payload.data.courses?.length,
           firstCourse: action.payload.data.courses?.[0],
-          stageInfo: action.payload.data.courses?.map(c => ({
-            id: c._id,
-            title: c.title,
-            stage: c.stage,
-            stageName: c.stage?.name,
-            hasStage: !!c.stage
-          }))
         });
         state.courses = action.payload.data.courses;
       })
@@ -396,13 +387,6 @@ const courseSlice = createSlice({
         console.log('🌟 Frontend received FEATURED courses data:', {
           totalCourses: action.payload.data.courses?.length,
           firstCourse: action.payload.data.courses?.[0],
-          stageInfo: action.payload.data.courses?.map(c => ({
-            id: c._id,
-            title: c.title,
-            stage: c.stage,
-            stageName: c.stage?.name,
-            hasStage: !!c.stage
-          }))
         });
         state.featuredCourses = action.payload.data.courses;
       })

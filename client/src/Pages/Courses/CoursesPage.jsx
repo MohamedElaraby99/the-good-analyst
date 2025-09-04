@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import Layout from '../../Layout/Layout';
 import { getAllCourses } from '../../Redux/Slices/CourseSlice';
-import { getAllStages } from '../../Redux/Slices/StageSlice';
 import { getAllSubjects } from '../../Redux/Slices/SubjectSlice';
 import { 
   FaSearch, 

@@ -141,15 +141,11 @@ export const checkCourseAccess = asyncHandler(async (req, res) => {
     const userId = req.user.id;
     if (!courseId) throw new ApiError(400, 'courseId is required');
 
-    const now = new Date();
-    // Find the most recent access window (even if expired)
-    const latestAccess = await CourseAccess.findOne({ userId, courseId }).sort({ accessEndAt: -1 });
-    const hasActiveAccess = !!(latestAccess && latestAccess.accessEndAt > now);
-
+    // All courses are now free - always return true
     return res.status(200).json(new ApiResponse(200, {
-        hasAccess: hasActiveAccess,
-        accessEndAt: latestAccess?.accessEndAt || null,
-        source: latestAccess?.source || null
+        hasAccess: true,
+        accessEndAt: null,
+        source: 'free'
     }, 'Access status'));
 });
 

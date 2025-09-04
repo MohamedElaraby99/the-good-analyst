@@ -86,9 +86,6 @@ export default function AdminDashboard() {
   // Get user role from auth state
   const { role } = useSelector((state) => state.auth);
 
-  // Add state for stages data
-  const [stages, setStages] = useState([]);
-  const [stagesLoading, setStagesLoading] = useState(true);
    
   // Dark mode detection
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -122,52 +119,6 @@ export default function AdminDashboard() {
     totalAvailable: 0
   });
 
-  // Function to fetch stages data
-  const fetchStagesData = async () => {
-    try {
-      setStagesLoading(true);
-      // Use the real stages stats API endpoint
-      console.log('📊 Fetching real stages statistics...');
-      const response = await axiosInstance.get('/stages/stats');
-      
-      if (response.data.success) {
-        const stagesData = response.data.data?.stages || response.data.data || [];
-        console.log('📊 Real stages data received:', response.data);
-        console.log('📊 Raw stages array:', stagesData);
-        
-        // Process real stages data
-        const processedStages = stagesData.map(stage => {
-          console.log('📊 Processing stage:', stage);
-          return {
-            name: stage.name || 'مرحلة غير محددة',
-            studentsCount: stage.studentsCount || 0,
-            subjectsCount: stage.subjectsCount || 0,
-            _id: stage._id
-          };
-        });
-        
-        console.log('✅ Real stages data processed and set:', processedStages);
-        
-        // Only set stages if we have valid data
-        if (processedStages.length > 0) {
-          setStages(processedStages);
-        } else {
-          console.log('⚠️ No valid stages data - chart will show empty state');
-          setStages([]);
-        }
-      } else {
-        console.log('⚠️ No stages data available in response');
-        setStages([]);
-      }
-    } catch (error) {
-      console.error('❌ Error fetching stages data:', error);
-      console.log('⚠️ Stages API error - chart will show empty state');
-      setStages([]);
-      toast.error('فشل في تحميل بيانات المراحل الدراسية');
-    } finally {
-      setStagesLoading(false);
-    }
-  };
 
   // Function to fetch recharge codes statistics
   const fetchRechargeCodesStats = async () => {
@@ -195,63 +146,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Enhanced chart data for stages - now using real data
-  const stagesChartData = useMemo(() => {
-    console.log('📊 Creating chart data for stages:', stages);
-    
-    if (!stages || stages.length === 0) {
-      return {
-        labels: ["لا توجد مراحل"],
-        datasets: [
-          {
-            label: "عدد المراحل الدراسية",
-            data: [0],
-            backgroundColor: ["rgba(156, 163, 175, 0.5)"],
-            borderColor: ["rgba(156, 163, 175, 1)"],
-            borderWidth: 2,
-          },
-        ],
-      };
-    }
-
-    const chartData = {
-      labels: stages.map(stage => stage.name),
-      datasets: [
-        {
-          label: "عدد المراحل الدراسية",
-          data: stages.map(() => 1), // Each stage counts as 1 to show total count
-          backgroundColor: [
-            "rgba(59, 130, 246, 0.8)",
-            "rgba(16, 185, 129, 0.8)",
-            "rgba(245, 158, 11, 0.8)",
-            "rgba(239, 68, 68, 0.8)",
-            "rgba(139, 92, 246, 0.8)",
-            "rgba(236, 72, 153, 0.8)",
-            "rgba(99, 102, 241, 0.8)",
-            "rgba(6, 182, 212, 0.8)",
-            "rgba(245, 101, 101, 0.8)",
-            "rgba(52, 211, 153, 0.8)"
-          ],
-          borderColor: [
-            "rgba(59, 130, 246, 1)",
-            "rgba(16, 185, 129, 1)",
-            "rgba(245, 158, 11, 1)",
-            "rgba(239, 68, 68, 1)",
-            "rgba(139, 92, 246, 1)",
-            "rgba(236, 72, 153, 1)",
-            "rgba(99, 102, 241, 1)",
-            "rgba(6, 182, 212, 1)",
-            "rgba(245, 101, 101, 1)",
-            "rgba(52, 211, 153, 1)"
-          ],
-          borderWidth: 2,
-        },
-      ],
-    };
-    
-    console.log('📊 Final chart data:', chartData);
-    return chartData;
-  }, [stages]);
 
   // Enhanced chart data for platform growth
   const platformGrowthData = {
@@ -290,8 +184,6 @@ export default function AdminDashboard() {
       console.log('🚀 Starting to fetch all real data for dashboard...');
       await dispatch(getStatsData());
       console.log('✅ Real stats data fetched from /admin/stats/users');
-      await fetchStagesData(); // Fetch stages data
-      console.log('✅ Real stages data fetched');
       await fetchRechargeCodesStats(); // Fetch recharge codes statistics
       console.log('✅ Real recharge codes data fetched');
       console.log('🎯 All real data loaded - no fake data should be displayed');
@@ -466,95 +358,6 @@ export default function AdminDashboard() {
                   : 'opacity-0 translate-y-8'
               }`}
               style={{ transitionDelay: '800ms' }}>
-                {/* Course Categories Chart */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 lg:p-6">
-                  <div className="flex items-center gap-3 mb-4 lg:mb-6">
-                    <div className="p-2 bg-[#3A5A7A]-100 dark:bg-[#3A5A7A]-900/30 rounded-lg">
-                      <FaChartLine className="text-[#3A5A7A]-600 dark:text-[#4D6D8E] text-lg lg:text-xl" />
-                    </div>
-                    <h3 className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white text-right">
-                      المراحل الدراسية
-                    </h3>
-                  </div>
-                  <div className="relative h-48 sm:h-56 lg:h-64 w-full">
-                    {stagesLoading ? (
-                      <div className="flex items-center justify-center h-full">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4D6D8E]"></div>
-                        <span className="mr-2 text-gray-600 dark:text-gray-300">جاري تحميل بيانات المراحل...</span>
-                      </div>
-                    ) : (
-                      <Pie
-                        data={stagesChartData}
-                        options={{
-                          responsive: true,
-                          maintainAspectRatio: false,
-                          plugins: {
-                            legend: {
-                              position: 'bottom',
-                              labels: {
-                                color: isDarkMode ? '#ffffff' : '#374151', // Dynamic color based on dark mode
-                                font: { 
-                                  size: window.innerWidth < 768 ? 10 : 12,
-                                  family: 'system-ui, -apple-system, sans-serif'
-                                },
-                                padding: window.innerWidth < 768 ? 10 : 20,
-                                boxWidth: window.innerWidth < 768 ? 12 : 16,
-                                boxHeight: window.innerWidth < 768 ? 8 : 12,
-                                usePointStyle: true
-                              }
-                            },
-                            tooltip: {
-                              backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.9)' : 'rgba(0, 0, 0, 0.8)',
-                              titleColor: 'white',
-                              bodyColor: 'white',
-                              borderColor: 'rgba(255, 255, 255, 0.1)',
-                              borderWidth: 1,
-                              cornerRadius: 8,
-                              callbacks: {
-                                label: function(context) {
-                                  if (stages.length === 0) {
-                                    return 'لا توجد بيانات للمراحل الدراسية';
-                                  }
-                                  const stage = stages[context.dataIndex];
-                                  return [
-                                    `${context.label}: ${context.parsed} طالب`,
-                                    `المواد: ${stage?.subjectsCount || 0}`
-                                  ];
-                                }
-                              }
-                            }
-                          },
-                          layout: {
-                            padding: {
-                              top: 10,
-                              bottom: 10,
-                              left: 10,
-                              right: 10
-                            }
-                          }
-                        }}
-                      />
-                    )}
-                    
-                    {/* Show reload button overlay for empty data */}
-                    {!stagesLoading && stages.length === 0 && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-800 bg-opacity-80 dark:bg-opacity-80 rounded-lg">
-                        <div className="text-center">
-                          <div className="text-4xl mb-4">📊</div>
-                          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
-                            لا توجد بيانات للمراحل الدراسية
-                          </p>
-                          <button 
-                            onClick={fetchStagesData}
-                            className="px-4 py-2 bg-[#4D6D8E] hover:bg-[#3A5A7A]-600 text-white rounded-lg text-sm transition-colors"
-                          >
-                            إعادة التحميل
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
 
                 {/* Platform Growth Chart */}
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 lg:p-6">
@@ -759,19 +562,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* إدارة المراحل */}
-                <div className="bg-gradient-to-br from-[#4D6D8E] to-[#3A5A7A]-600 rounded-xl p-4 lg:p-6 text-white hover:from-[#3A5A7A]-600 hover:to-[#3A5A7A]-700 transition-all duration-200 transform hover:scale-105 cursor-pointer shadow-lg hover:shadow-xl" onClick={() => navigate("/admin/stages")}>
-                  <div className="flex items-center justify-between mb-3">
-                    <FaGraduationCap className="text-2xl lg:text-3xl text-[#3A5A7A]-200" />
-                    <div className="w-3 h-3 bg-[#3A5A7A]-200 rounded-full animate-pulse"></div>
-                  </div>
-                  <h4 className="text-lg lg:text-xl font-bold mb-2">إدارة المراحل</h4>
-                  <p className="text-[#3A5A7A]-100 text-sm lg:text-base opacity-90">إدارة المراحل الدراسية</p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-xs text-[#3A5A7A]-200">إدارة كاملة</span>
-                    <FaArrowUp className="text-[#3A5A7A]-200 transform rotate-45" />
-                  </div>
-                </div>
 
               </div>
             </div>

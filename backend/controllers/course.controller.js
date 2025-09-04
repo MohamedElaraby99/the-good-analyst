@@ -9,9 +9,9 @@ import jwt from 'jsonwebtoken';
 // Create a new course
 export const createCourse = async (req, res, next) => {
   try {
-    const { title, description, instructor, stage, subject } = req.body;
-    if (!title || !instructor || !stage || !subject) {
-      return res.status(400).json({ success: false, message: 'Title, instructor, stage, and subject are required' });
+    const { title, description, instructor, subject } = req.body;
+    if (!title || !instructor || !subject) {
+      return res.status(400).json({ success: false, message: 'Title, instructor, and subject are required' });
     }
 
     // Prepare course data
@@ -19,7 +19,6 @@ export const createCourse = async (req, res, next) => {
             title,
             description,
       instructor,
-            stage,
       subject,
       units: [],
       directLessons: []
@@ -85,9 +84,6 @@ export const getAdminCourses = async (req, res, next) => {
       query.subject = { $regex: req.query.subject, $options: 'i' };
     }
     
-    if (req.query.stage) {
-      query.stage = { $regex: req.query.stage, $options: 'i' };
-    }
     
     if (req.query.featured !== undefined && req.query.featured !== '') {
       query.featured = req.query.featured === 'true';
@@ -109,7 +105,6 @@ export const getAdminCourses = async (req, res, next) => {
     
     const courses = await Course.find(query)
       .populate('instructor', 'name')
-      .populate('stage', 'name')
       .populate('subject', 'title');
 
     return res.status(200).json({ success: true, data: { courses } });
@@ -125,50 +120,23 @@ export const getAllCourses = async (req, res, next) => {
     
     console.log('getAllCourses called with user:', {
       hasUser: !!req.user,
-      userId: req.user?.id,
-      userStage: req.user?.stage,
-      userStageName: req.user?.stageName
+      userId: req.user?.id
     });
     
-    // If user is logged in and has a stage, filter courses by their stage
-    if (req.user && req.user.stage) {
-      query.stage = req.user.stage;
-      console.log('🎯 Filtering courses by user stage:', req.user.stage, '(' + req.user.stageName + ')');
-      
-      // Stage filtering only (category field removed)
-      console.log('🎯 Filtering courses by user stage only');
-    } else {
-      console.log('⚠️ No stage filtering applied - showing all courses');
-      if (req.user && !req.user.stage) {
-        console.log('User logged in but has no stage assigned');
-      }
-    }
+    // Show all courses for all users
     
     const courses = await Course.find(query)
       .populate('instructor', 'name')
-      .populate('stage', 'name')
       .populate('subject', 'title')
       .select('-units.lessons.exams.questions.correctAnswer -units.lessons.trainings.questions.correctAnswer -directLessons.exams.questions.correctAnswer -directLessons.trainings.questions.correctAnswer -units.lessons.exams.userAttempts -units.lessons.trainings.userAttempts -directLessons.exams.userAttempts -directLessons.trainings.userAttempts');
 
     console.log('📊 Raw courses before processing:', courses.map(c => ({
       id: c._id,
-      title: c.title,
-      stage: c.stage?.name,
-      stageId: c.stage?._id
+      title: c.title
     })));
     
     console.log('🎯 Final query used for filtering:', JSON.stringify(query, null, 2));
-    console.log(`📚 Found ${courses.length} courses matching user's stage criteria`);
-
-    // Check if any courses have invalid stage references
-    const coursesWithMissingStages = courses.filter(c => !c.stage || !c.stage.name);
-    if (coursesWithMissingStages.length > 0) {
-      console.log('⚠️ Found courses with missing/invalid stage data:', coursesWithMissingStages.map(c => ({
-        id: c._id,
-        title: c.title,
-        stageRef: c.stage
-      })));
-    }
+    console.log(`📚 Found ${courses.length} courses`);
 
     // Further filter sensitive data from nested structures
     const secureCourses = courses.map(course => {
@@ -182,7 +150,6 @@ export const getAllCourses = async (req, res, next) => {
             _id: lesson._id,
             title: lesson.title,
             description: lesson.description,
-            price: lesson.price,
             videosCount: lesson.videos?.length || 0,
             pdfsCount: lesson.pdfs?.length || 0,
             examsCount: lesson.exams?.length || 0,
@@ -198,7 +165,6 @@ export const getAllCourses = async (req, res, next) => {
           _id: lesson._id,
           title: lesson.title,
           description: lesson.description,
-          price: lesson.price,
           videosCount: lesson.videos?.length || 0,
           pdfsCount: lesson.pdfs?.length || 0,
           examsCount: lesson.exams?.length || 0,
@@ -211,11 +177,9 @@ export const getAllCourses = async (req, res, next) => {
     });
 
     console.log(`📚 Returning ${secureCourses.length} courses for user`, {
-      userStage: req.user?.stage,
       coursesReturned: secureCourses.map(c => ({ 
         id: c._id, 
-        title: c.title, 
-        stage: c.stage?.name 
+        title: c.title
       }))
     });
 
@@ -270,29 +234,11 @@ export const getFeaturedCourses = async (req, res, next) => {
     
     let query = {};
     
-    // Check if this route also needs stage filtering (based on how it's called)
-    const token = req.cookies?.token || req.header('Authorization')?.replace('Bearer ', '');
-    if (token) {
-      try {
-        const userDetails = await jwt.verify(token, process.env.JWT_SECRET);
-        const User = (await import('../models/user.model.js')).default;
-        const user = await User.findById(userDetails.id).populate('stage');
-        if (user && user.stage) {
-          query.stage = user.stage._id;
-          console.log('🎯 Filtering featured courses by user stage:', user.stage.name);
-          
-          // Stage filtering only (category field removed)
-          console.log('🎯 Filtering featured courses by user stage only');
-        }
-      } catch (error) {
-        console.log('Optional auth failed for featured courses, showing all');
-      }
-    }
+    // Show all featured courses for all users
     
     console.log('Querying featured courses with query:', JSON.stringify(query, null, 2));
     const courses = await Course.find({ ...query, featured: true })
       .populate('instructor', 'name')
-      .populate('stage', 'name')
       .populate('subject', 'title')
       .limit(6);
       
@@ -300,9 +246,7 @@ export const getFeaturedCourses = async (req, res, next) => {
     console.log('📚 Featured courses found:', courses.length);
     console.log('📚 Featured courses details:', courses.map(c => ({
       id: c._id,
-      title: c.title,
-      stage: c.stage?.name,
-
+      title: c.title
     })));
 
     // Create secure versions without sensitive data
@@ -317,7 +261,6 @@ export const getFeaturedCourses = async (req, res, next) => {
             _id: lesson._id,
             title: lesson.title,
             description: lesson.description,
-            price: lesson.price,
             videosCount: lesson.videos?.length || 0,
             pdfsCount: lesson.pdfs?.length || 0,
             examsCount: lesson.exams?.length || 0,
@@ -331,7 +274,6 @@ export const getFeaturedCourses = async (req, res, next) => {
           _id: lesson._id,
           title: lesson.title,
           description: lesson.description,
-          price: lesson.price,
           videosCount: lesson.videos?.length || 0,
           pdfsCount: lesson.pdfs?.length || 0,
           examsCount: lesson.pdfs?.length || 0,
@@ -363,7 +305,6 @@ export const getCourseById = async (req, res, next) => {
     const { id } = req.params;
     const course = await Course.findById(id)
       .populate('instructor', 'name')
-      .populate('stage', 'name')
       .populate('subject', 'title');
         
     if (!course) {
@@ -387,7 +328,6 @@ export const getCourseById = async (req, res, next) => {
               _id: lesson._id,
               title: lesson.title,
               description: lesson.description,
-              price: lesson.price,
               content: lesson.content,
               videosCount: lesson.videos?.length || 0,
               pdfsCount: lesson.pdfs?.length || 0,
@@ -415,7 +355,6 @@ export const getCourseById = async (req, res, next) => {
           _id: lesson._id,
           title: lesson.title,
           description: lesson.description,
-          price: lesson.price,
           content: lesson.content,
           videosCount: lesson.videos?.length || 0,
           pdfsCount: lesson.pdfs?.length || 0,
@@ -451,7 +390,6 @@ export const getCourseWithProgression = async (req, res, next) => {
 
     const course = await Course.findById(id)
       .populate('instructor', 'name')
-      .populate('stage', 'name')
       .populate('subject', 'title');
         
     if (!course) {
@@ -652,7 +590,6 @@ export const getLessonById = async (req, res, next) => {
       _id: lesson._id,
       title: lesson.title,
       description: lesson.description,
-      price: lesson.price,
       content: lesson.content,
       videos: filteredVideos.map(video => ({
         _id: video._id,
@@ -691,9 +628,9 @@ export const getLessonById = async (req, res, next) => {
 export const updateCourse = async (req, res, next) => {
   try {
     const { id } = req.params;
-            const { title, description, instructor, stage, subject } = req.body;
+            const { title, description, instructor, subject } = req.body;
 
-          console.log('🔄 Updating course:', { id, title, description, instructor, stage, subject });
+          console.log('🔄 Updating course:', { id, title, description, instructor, subject });
     console.log('📁 File uploaded:', req.file ? 'Yes' : 'No');
 
     // Find the existing course
@@ -709,7 +646,7 @@ export const updateCourse = async (req, res, next) => {
     });
 
     // Prepare update data
-            const updateData = { title, description, instructor, stage, subject };
+            const updateData = { title, description, instructor, subject };
 
     // Handle image upload if provided
     if (req.file) {
@@ -778,7 +715,6 @@ export const updateCourse = async (req, res, next) => {
     if (updateData.title) existingCourse.title = updateData.title;
     if (updateData.description) existingCourse.description = updateData.description;
     if (updateData.instructor) existingCourse.instructor = updateData.instructor;
-    if (updateData.stage) existingCourse.stage = updateData.stage;
     if (updateData.subject) existingCourse.subject = updateData.subject;
     
     
@@ -788,10 +724,9 @@ export const updateCourse = async (req, res, next) => {
     // Fetch the updated course with populated fields
     const course = await Course.findById(id)
       .populate('instructor', 'name')
-      .populate('stage', 'name')
       .populate('subject', 'title')
 
-      .select('title description instructor stage subject image createdAt updatedAt');
+      .select('title description instructor subject image createdAt updatedAt');
     
     console.log('✅ Course updated successfully');
     console.log('📊 Final course data:', JSON.stringify(course, null, 2));
@@ -871,7 +806,7 @@ export const getCourseStats = async (req, res, next) => {
 export const addUnitToCourse = async (req, res, next) => {
   try {
     const { courseId } = req.params;
-    const { title, description, price } = req.body.unitData;
+    const { title, description } = req.body.unitData;
     if (!title) {
       return res.status(400).json({ success: false, message: 'Unit title is required' });
     }
@@ -879,7 +814,7 @@ export const addUnitToCourse = async (req, res, next) => {
         if (!course) {
       return res.status(404).json({ success: false, message: 'Course not found' });
     }
-    course.units.push({ title, description, price, lessons: [] });
+    course.units.push({ title, description, lessons: [] });
         await course.save();
     return res.status(200).json({ success: true, message: 'Unit added', data: { course } });
     } catch (error) {
@@ -892,7 +827,7 @@ export const addLessonToUnit = async (req, res, next) => {
     try {
         const { courseId, unitId } = req.params;
     const { lessonData } = req.body;
-    const { title, description, price, content } = lessonData;
+    const { title, description, content } = lessonData;
         if (!title) {
       return res.status(400).json({ success: false, message: 'Lesson title is required' });
         }
@@ -904,7 +839,7 @@ export const addLessonToUnit = async (req, res, next) => {
         if (!unit) {
       return res.status(404).json({ success: false, message: 'Unit not found' });
     }
-    unit.lessons.push({ title, description, price, content });
+    unit.lessons.push({ title, description, content });
         await course.save();
     return res.status(200).json({ success: true, message: 'Lesson added to unit', data: { course } });
     } catch (error) {
@@ -917,7 +852,7 @@ export const addDirectLessonToCourse = async (req, res, next) => {
   try {
     const { courseId } = req.params;
     const { lessonData } = req.body;
-    const { title, description, price, content } = lessonData;
+    const { title, description, content } = lessonData;
     if (!title) {
       return res.status(400).json({ success: false, message: 'Lesson title is required' });
     }
@@ -925,7 +860,7 @@ export const addDirectLessonToCourse = async (req, res, next) => {
         if (!course) {
       return res.status(404).json({ success: false, message: 'Course not found' });
     }
-    course.directLessons.push({ title, description, price, content });
+    course.directLessons.push({ title, description, content });
         await course.save();
     return res.status(200).json({ success: true, message: 'Direct lesson added', data: { course } });
     } catch (error) {
@@ -938,7 +873,7 @@ export const updateLesson = async (req, res, next) => {
   try {
     const { courseId, lessonId } = req.params;
     const { unitId, lessonData } = req.body;
-    const { title, description, price } = lessonData;
+    const { title, description } = lessonData;
     if (!title) {
       return res.status(400).json({ success: false, message: 'Lesson title is required' });
     }
@@ -958,7 +893,6 @@ export const updateLesson = async (req, res, next) => {
       }
       lesson.title = title;
       lesson.description = description;
-      lesson.price = price;
         } else {
       // Update direct lesson
       const lesson = course.directLessons.id(lessonId);
@@ -967,7 +901,6 @@ export const updateLesson = async (req, res, next) => {
       }
       lesson.title = title;
       lesson.description = description;
-      lesson.price = price;
     }
         await course.save();
     return res.status(200).json({ success: true, message: 'Lesson updated', data: { course } });
@@ -1067,7 +1000,7 @@ export const updateUnit = async (req, res, next) => {
   try {
     const { courseId, unitId } = req.params;
     const { unitData } = req.body;
-    const { title, description, price } = unitData;
+    const { title, description } = unitData;
     if (!title) {
       return res.status(400).json({ success: false, message: 'Unit title is required' });
     }
@@ -1081,7 +1014,6 @@ export const updateUnit = async (req, res, next) => {
     }
     unit.title = title;
     unit.description = description;
-    unit.price = price;
         await course.save();
     return res.status(200).json({ success: true, message: 'Unit updated', data: { course } });
     } catch (error) {

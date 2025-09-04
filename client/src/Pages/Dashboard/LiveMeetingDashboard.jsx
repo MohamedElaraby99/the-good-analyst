@@ -11,7 +11,6 @@ import {
 } from '../../Redux/Slices/LiveMeetingSlice';
 import { getAllUsers } from '../../Redux/Slices/AdminUserSlice';
 import { getAllInstructors } from '../../Redux/Slices/InstructorSlice';
-import { getAllStages } from '../../Redux/Slices/StageSlice';
 import { getAllSubjects } from '../../Redux/Slices/SubjectSlice';
 import Layout from '../../Layout/Layout';
 import {
@@ -43,7 +42,6 @@ const LiveMeetingDashboard = () => {
   const { liveMeetings, loading, stats, pagination } = useSelector(state => state.liveMeeting);
   const { users } = useSelector(state => state.adminUser);
   const { instructors } = useSelector(state => state.instructor);
-  const { stages } = useSelector(state => state.stage);
   const { subjects } = useSelector(state => state.subject);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -52,7 +50,6 @@ const LiveMeetingDashboard = () => {
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [stageFilter, setStageFilter] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -63,7 +60,6 @@ const LiveMeetingDashboard = () => {
     scheduledDate: '',
     duration: 60,
     instructor: '',
-    stage: '',
     subject: '',
     attendees: [],
     maxAttendees: 100,
@@ -82,23 +78,21 @@ const LiveMeetingDashboard = () => {
 
   useEffect(() => {
     console.log('🔍 useEffect triggered - fetching data...');
-    dispatch(getAllLiveMeetings({ page: currentPage, limit: 10, status: statusFilter, stage: stageFilter, subject: subjectFilter }));
+    dispatch(getAllLiveMeetings({ page: currentPage, limit: 10, status: statusFilter, subject: subjectFilter }));
     dispatch(getLiveMeetingStats());
     dispatch(getAllUsers({ limit: 1000 }));
     dispatch(getAllInstructors());
-    dispatch(getAllStages());
     dispatch(getAllSubjects());
-  }, [dispatch, currentPage, statusFilter, stageFilter, subjectFilter]);
+  }, [dispatch, currentPage, statusFilter, subjectFilter]);
 
   // Debug logging for state changes
   useEffect(() => {
     console.log('📊 Current Redux State:', {
       instructors: instructors?.length || 0,
       subjects: subjects?.length || 0,
-      stages: stages?.length || 0,
       users: users?.length || 0
     });
-  }, [instructors, subjects, stages, users]);
+  }, [instructors, subjects, users]);
 
   const resetForm = () => {
     setFormData({
@@ -108,7 +102,6 @@ const LiveMeetingDashboard = () => {
       scheduledDate: '',
       duration: 60,
       instructor: '',
-      stage: '',
       subject: '',
       attendees: [],
       maxAttendees: 100,
@@ -311,13 +304,6 @@ const LiveMeetingDashboard = () => {
       
       if (!matchesSearch) return false;
       
-      // Filter by stage
-      if (attendeeStageFilter) {
-        const userStageId = user.stage?._id || user.stage;
-        if (userStageId !== attendeeStageFilter) {
-          return false;
-        }
-      }
       
       return true;
     });
@@ -338,7 +324,7 @@ const LiveMeetingDashboard = () => {
               </p>
               {/* Data Loading Status */}
               <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                {!instructors || !subjects || !stages ? (
+                {!instructors || !subjects ? (
                   <span className="text-[#3A5A7A]-600">🔄 جاري تحميل البيانات الأساسية...</span>
                 ) : (
                   <span className="text-green-600">✅ البيانات جاهزة</span>
@@ -431,16 +417,6 @@ const LiveMeetingDashboard = () => {
                 <option value="cancelled">ملغاة</option>
               </select>
 
-              <select
-                value={stageFilter}
-                onChange={(e) => setStageFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#4D6D8E] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">جميع المراحل</option>
-                {stages.map((stage) => (
-                  <option key={stage._id} value={stage._id}>{stage.name}</option>
-                ))}
-              </select>
 
               <select
                 value={subjectFilter}
@@ -735,17 +711,6 @@ const LiveMeetingDashboard = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       المرحلة *
                     </label>
-                    <select
-                      required
-                      value={formData.stage}
-                      onChange={(e) => setFormData({...formData, stage: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4D6D8E] bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    >
-                      <option value="">اختر المرحلة</option>
-                      {stages.map((stage) => (
-                        <option key={stage._id} value={stage._id}>{stage.name}</option>
-                      ))}
-                    </select>
                   </div>
 
                   <div>
@@ -930,17 +895,6 @@ const LiveMeetingDashboard = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       المرحلة *
                     </label>
-                    <select
-                      required
-                      value={formData.stage}
-                      onChange={(e) => setFormData({...formData, stage: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4D6D8E] bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    >
-                      <option value="">اختر المرحلة</option>
-                      {stages.map((stage) => (
-                        <option key={stage._id} value={stage._id}>{stage.name}</option>
-                      ))}
-                    </select>
                   </div>
 
                   <div>
@@ -1077,16 +1031,6 @@ const LiveMeetingDashboard = () => {
                   </div>
 
                   {/* Stage Filter */}
-                  <select
-                    value={attendeeStageFilter}
-                    onChange={(e) => setAttendeeStageFilter(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#4D6D8E] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  >
-                    <option value="">جميع المراحل</option>
-                    {stages.map((stage) => (
-                      <option key={stage._id} value={stage._id}>{stage.name}</option>
-                    ))}
-                  </select>
 
                   {/* Show Students Only Toggle */}
                   <div className="flex items-center">
@@ -1186,11 +1130,6 @@ const LiveMeetingDashboard = () => {
                                 )}
                               </div>
                               <div className="text-right">
-                                {user.stage && (
-                                  <div className="text-xs bg-[#3A5A7A]-100 dark:bg-[#3A5A7A]-900/20 text-[#3A5A7A]-800 dark:text-[#4D6D8E] px-2 py-1 rounded-full">
-                                    {user.stage.name || user.stage || 'مرحلة غير محددة'}
-                                  </div>
-                                )}
                                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                   {user.role === 'ADMIN' ? 'مدير' : user.role === 'USER' ? 'طالب' : user.role}
                                 </div>
